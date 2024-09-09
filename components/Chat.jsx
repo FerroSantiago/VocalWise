@@ -11,11 +11,11 @@ import {
 import Icon from "react-native-vector-icons/Feather"; // Biblioteca de iconos
 import { LinearGradient } from "expo-linear-gradient"; // Biblioteca para el fondo degradado
 
-import logoBlanco from "./assets/logoBlanco.png";
+import logoBlanco from "../assets/logoBlanco.png";
 
 const { width } = Dimensions.get("window"); // Tamaño de la pantalla
 
-export default function Component() {
+export default function Chat() {
   return (
     <View style={styles.container}>
       {/* Gradient Background */}
