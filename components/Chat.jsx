@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather"; // Biblioteca de iconos
 import { LinearGradient } from "expo-linear-gradient"; // Biblioteca para el fondo degradado
 
 import logoBlanco from "../assets/logoBlanco.png";
 
-const { width } = Dimensions.get("window"); // Tamaño de la pantalla
+const { width, height } = Dimensions.get("window"); // Tamaño de la pantalla
 
 export default function Chat() {
   return (
@@ -82,6 +83,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    width: "100%"
   },
   gradient: {
     flex: 1,
@@ -89,10 +91,11 @@ const styles = StyleSheet.create({
   },
   logo: {
     position: "absolute",
-    top: "30%", // Posición ajustada para que quede en el fondo
-    left: "7%",
-    width: width * 0.85, // Tamaño del logo
-    height: width * 0.85,
+    top: Platform.OS === "web" ? "25%" : "10%", // Posición ajustada para que quede en el fondo
+    left: Platform.OS === "web" ? "50%" : "45%",
+    transform: [{ translateX: Platform.OS === "web" ? -width * 0.175 : -width * 0.35 }], // Centrado dinámico
+    width: Platform.OS === "web" ? width * 0.4 : width * 0.85, // Tamaño del logo
+    height: Platform.OS === "web" ? height * 0.4 : height * 0.85,
     opacity: 0.1, // Transparencia del logo
   },
   menuIcon: {
