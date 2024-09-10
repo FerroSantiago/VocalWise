@@ -1,14 +1,16 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
-
-import Chat from "./components/Chat";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import Layout from "./app/_layout";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <StatusBar style="auto" />
-      <Chat />
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar style="auto" />
+        <Layout />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
