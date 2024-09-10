@@ -81,9 +81,11 @@ export default function Chat() {
 
         {/* Menu icon */}
         <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
+        <Icon
+              name="menu"
+              size={40}
+              color="#CCC"
+            />
         </TouchableOpacity>
 
         {/* Background overlay with fading effect */}
@@ -188,13 +190,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
     flexDirection: "column",
     justifyContent: "space-between",
-    height: 20,
-  },
-  menuLine: {
-    width: 20,
-    height: 2,
-    backgroundColor: "white",
-    borderRadius: 2,
   },
   sidebarMenu: {
     position: "absolute",

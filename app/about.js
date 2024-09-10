@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
   },
   returnButton: {
     color: "#FFF",
+    textAlign: "center",
     fontSize: 20,
     borderWidth: 2,
     padding: 5,
