@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Image,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Animated,
   Dimensions,
   Platform,
 } from "react-native";
@@ -21,17 +22,47 @@ const { width, height } = Dimensions.get("window"); // Tamaño de la pantalla
 export default function Chat() {
   const insets = useSafeAreaInsets();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-256)).current; // Estado de animación
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    if (isMenuOpen) {
+      // Animar al cerrar
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -width, // Deslizar fuera de la pantalla
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0, // Hacer transparente el fondo
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setIsMenuOpen(false));
+    } else {
+      setIsMenuOpen(true); // Mostrar el menú primero
+      // Animar al abrir
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0, // Deslizar hacia dentro de la pantalla
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1, // Hacer visible el fondo
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
   };
 
   const previousChats = [
-    'Chat sobre IA',
-    'Discusión de películas',
-    'Recetas de cocina',
-    'Viaje a Japón',
-    'Programación en React',
+    'Final Análisis Matemático II',
+    'Mejora de muletillas',
+    'Presentación Paradigmas de Programación',
+    'Aprendiendo oratoria',
   ];
 
   return (
@@ -49,9 +80,16 @@ export default function Chat() {
             <View style={styles.menuLine} />
           </TouchableOpacity>
 
+          {/* Background overlay with fading effect */}
+          {isMenuOpen && (
+            <Animated.View
+              style={[styles.overlay, { opacity: fadeAnim }]}
+            />
+          )}
+
           {/* Sidebar Menu */}
           {isMenuOpen && (
-            <View style={styles.sidebarMenu}>
+            <Animated.View style={[styles.sidebarMenu, { transform: [{ translateX: slideAnim }] }]}>
               <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
               </TouchableOpacity>
               <View style={styles.sidebarContent}>
@@ -64,7 +102,7 @@ export default function Chat() {
                   ))}
                 </ScrollView>
               </View>
-            </View>
+            </Animated.View>
           )}
 
           {/* Chat content */}
@@ -140,8 +178,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     height: '100%',
-    width: 256, // w-64
-    backgroundColor: '#1e3a8a', // bg-blue-900
+    width: 256,
+    backgroundColor: '#333',
     zIndex: 5,
     padding: 16,
   },
@@ -151,7 +189,7 @@ const styles = StyleSheet.create({
     right: 16,
   },
   sidebarContent: {
-    marginTop: 64, // mt-12
+    marginTop: 64,
   },
   sidebarTitle: {
     color: 'white',
@@ -159,10 +197,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)', // Fondo oscuro semitransparente
+    zIndex: 4,
+  },
   chatItem: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#1e40af', // hover:bg-blue-800
+    backgroundColor: '#444',
     marginBottom: 8,
   },
   chatText: {
@@ -195,7 +242,7 @@ const styles = StyleSheet.create({
     flexShrink: 1, // Evita que el cuadro crezca más allá del contenido
   },
   promptText: {
-    color: "#FFF",
+    color: "#CCC",
   },
   icon: {
     marginLeft: 8,
@@ -211,7 +258,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: "#FFF",
+    color: "#CCC",
   },
   iconLeft: {
     marginRight: 10,
