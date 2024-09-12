@@ -190,7 +190,7 @@ export default function Chat() {
             automaticallyAdjustKeyboardInsets
           />
           <KeyboardAvoidingView
-            behavior="position"
+            behavior={Platform.OS === "ios" ? "position" : undefined}
             keyboardVerticalOffset={100}
           >
             {/* Input field */}
