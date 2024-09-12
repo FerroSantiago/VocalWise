@@ -10,6 +10,8 @@ import {
   Animated,
   Dimensions,
   Platform,
+  KeyboardAvoidingView,
+  FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
@@ -18,6 +20,23 @@ import { LinearGradient } from "expo-linear-gradient";
 import logoBlanco from "../assets/logoBlanco.png";
 
 const { width, height } = Dimensions.get("window");
+
+function BubbleMessage({ author, message }) {
+  return (
+    <View
+      style={{
+        maxWidth: "80%",
+        borderRadius: 15,
+        padding: 10,
+        alignSelf: author === "user" ? "flex-end" : "flex-start",
+        backgroundColor:
+          author === "user" ? "rgba(51,51,51,.5)" : "rgba(102,102,102,.5)",
+      }}
+    >
+      <Text style={{ color: "#EEE" }}>{message}</Text>
+    </View>
+  );
+}
 
 export default function Chat() {
   const insets = useSafeAreaInsets();
@@ -52,21 +71,69 @@ export default function Chat() {
     }
   };
 
-  const previousChats = [
+  const chatHistory = [
     "Final Análisis Matemático II",
     "Mejora de muletillas",
     "Presentación Paradigmas de Programación",
     "Aprendiendo oratoria",
   ];
 
+  const fakeConversation = [
+    {
+      author: "user",
+      message:
+        "Que onda señor VocalWise, hoy tengo ganas de aprender sobre la mitocondria",
+    },
+    {
+      author: "bot",
+      message: "De una perro, dejame que pienso un toque y te tiro la data",
+    },
+    {
+      author: "user",
+      message: "Dale si total yo tengo todo el tiempo del mundo",
+    },
+    {
+      author: "bot",
+      message:
+        "Bueno ahi va. Las mitocondrias son orgánulos celulares eucariotas encargados de suministrar la mayor parte de la energía necesaria para la actividad celular a través del proceso denominado respiración celular",
+    },
+    {
+      author: "user",
+      message: "Ah claro, la famosa 'fábrica de energía' de la célula, ¿no?",
+    },
+    {
+      author: "bot",
+      message:
+        "Exacto, las mitocondrias actúan como la planta de energía de la célula. Dentro de ellas ocurre el ciclo de Krebs y la cadena de transporte de electrones, que producen ATP, la molécula de energía.",
+    },
+    {
+      author: "user",
+      message: "¿Y cuántas mitocondrias tiene una célula?",
+    },
+    {
+      author: "bot",
+      message:
+        "Depende del tipo de célula. Algunas células tienen solo unas pocas mitocondrias, mientras que otras, como las musculares, pueden tener miles debido a la alta demanda de energía.",
+    },
+    {
+      author: "user",
+      message:
+        "¡Qué locura! Entonces si hago mucho ejercicio, ¿mis células musculares tienen más mitocondrias?",
+    },
+    {
+      author: "bot",
+      message:
+        "Tal cual, el ejercicio físico regular estimula la biogénesis mitocondrial, lo que significa que tus células musculares producen más mitocondrias para satisfacer las necesidades energéticas adicionales.",
+    },
+  ];
+
   return (
     <LinearGradient
       colors={["rgba(51, 102, 204, 0.8)", "#222"]}
-      style={{
-        height: "100%",
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-      }}
+      style={[
+        styles.gradient,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
     >
       <View style={{ height: "100%" }}>
         {/* VocalWise Logo */}
@@ -96,12 +163,12 @@ export default function Chat() {
             onPress={toggleMenu}
             style={styles.closeButton}
           ></TouchableOpacity>
-          <View style={styles.sidebarContent}>
-            <Text style={styles.sidebarTitle}>Chats Anteriores</Text>
+          <View style={styles.chatHistoryContent}>
+            <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
             <ScrollView>
-              {previousChats.map((chat, index) => (
-                <TouchableOpacity key={index} style={styles.chatItem}>
-                  <Text style={styles.chatText}>{chat}</Text>
+              {chatHistory.map((chat, index) => (
+                <TouchableOpacity key={index} style={styles.chatHistoryItem}>
+                  <Text style={styles.chatHistoryText}>{chat}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -110,42 +177,37 @@ export default function Chat() {
 
         {/* Chat content */}
         <View style={styles.chatContent}>
-          {/* Example prompts */}
-          <View style={styles.prompts}>
-            {/* Right Prompt */}
-            <View style={styles.promptRight}>
-              <View style={styles.promptBox}>
-                <Text style={styles.promptText}>Idea de Prompt</Text>
-                <Text style={styles.icon}>💡</Text>
-              </View>
+          <FlatList
+            data={fakeConversation}
+            keyExtractor={(_, index) => index}
+            renderItem={({ item }) => <BubbleMessage {...item} />}
+            contentContainerStyle={{
+              gap: 15,
+              paddingLeft: 15,
+              paddingRight: 23,
+              paddingBottom: 15,
+            }}
+            automaticallyAdjustKeyboardInsets
+          />
+          <KeyboardAvoidingView
+            behavior="position"
+            keyboardVerticalOffset={100}
+          >
+            {/* Input field */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="¿Listo para aprender?"
+                placeholderTextColor="#CCC"
+                style={styles.input}
+              />
+              <TouchableOpacity style={styles.addFile}>
+                <Icon name="paperclip" size={20} color="#999" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.sendButton}>
+                <Icon name="send" size={20} color="#999" />
+              </TouchableOpacity>
             </View>
-
-            {/* Left Prompt */}
-            <View style={styles.promptLeft}>
-              <View style={styles.promptBox}>
-                <Text style={styles.promptText}>Idea de Pormpt</Text>
-                <Text style={styles.icon}>💡</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Input field */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="¿Listo para aprender?"
-              placeholderTextColor="#CCC"
-              style={styles.input}
-            />
-            <Icon
-              name="paperclip"
-              size={20}
-              color="#999"
-              style={styles.iconLeft}
-            />
-            <TouchableOpacity style={styles.sendButton}>
-              <Icon name="send" size={20} color="#999" />
-            </TouchableOpacity>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </View>
     </LinearGradient>
@@ -153,6 +215,20 @@ export default function Chat() {
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+    height: "100%",
+    width: "100%",
+  },
+  overlay: {
+    zIndex: 5,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.55)", // Fondo oscuro semitransparente
+  },
   logo: {
     position: "absolute",
     width: Platform.OS === "web" ? width * 0.4 : width * 0.85,
@@ -166,11 +242,9 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     position: "absolute",
-    top: 16,
+    top: 5,
     left: 16,
     zIndex: 6,
-    flexDirection: "column",
-    justifyContent: "space-between",
   },
   sidebarMenu: {
     zIndex: 5,
@@ -187,31 +261,23 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
-  sidebarContent: {
-    marginTop: 50,
+  chatHistoryContent: {
+    marginTop: Platform.OS === "web" ? 4 : 50,
+    height: "100%",
   },
-  sidebarTitle: {
+  chatHistoryTitle: {
     color: "white",
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 16,
   },
-  overlay: {
-    zIndex: 5,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.55)", // Fondo oscuro semitransparente
-  },
-  chatItem: {
+  chatHistoryItem: {
     padding: 8,
     marginBottom: 8,
     borderRadius: 8,
     backgroundColor: "#444",
   },
-  chatText: {
+  chatHistoryText: {
     color: "white",
   },
   chatContent: {
@@ -219,50 +285,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     width: Platform.OS === "web" ? width - 256 : "100%",
-    paddingLeft: Platform.OS === "web" ? 256 : 0,
-    marginLeft: Platform.OS === "web" ? "10%" : "2%",
-    padding: 16,
-  },
-  prompts: {
-    marginBottom: 16,
-  },
-  promptRight: {
-    alignItems: "flex-end", // Alinea el prompt a la derecha
-  },
-  promptLeft: {
-    alignItems: "flex-start", // Alinea el prompt a la izquierda
-  },
-  promptBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexShrink: 1, // Evita que el cuadro crezca más allá del contenido
-    maxWidth: "80%",
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-    marginBottom: 12,
-    backgroundColor: "#333",
-    borderRadius: 20,
-  },
-  promptText: {
-    color: "#CCC",
+    marginLeft: Platform.OS === "web" ? "256px" : "2%",
+    marginTop: 55,
   },
   icon: {
     marginLeft: 8,
   },
   inputContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 16,
+    width: Platform.OS === "web" ? "75%" : "95%",
+    paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
     backgroundColor: "#444",
+    marginLeft: Platform.OS === "web" ? 150 : 2,
+    marginBottom: 10,
   },
   input: {
     flex: 1,
     color: "#CCC",
   },
-  iconLeft: {
+  addFile: {
     marginRight: 10,
   },
   sendButton: {
