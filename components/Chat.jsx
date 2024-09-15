@@ -13,9 +13,8 @@ import {
   KeyboardAvoidingView,
   FlatList,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+//import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
 
 import logoBlanco from "../assets/logoBlanco.png";
 
@@ -39,7 +38,7 @@ function BubbleMessage({ author, message }) {
 }
 
 export default function Chat() {
-  const insets = useSafeAreaInsets();
+  //const insets = useSafeAreaInsets();
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
   const slideAnim = useRef(
     new Animated.Value(Platform.OS === "web" ? 0 : -256)
@@ -128,98 +127,82 @@ export default function Chat() {
   ];
 
   return (
-    <LinearGradient
-      colors={["rgba(51, 102, 204, 0.8)", "#222"]}
-      style={[
-        styles.gradient,
-        { paddingTop: insets.top, paddingBottom: insets.bottom },
-      ]}
-    >
-      <View style={{ height: "100%" }}>
-        {/* VocalWise Logo */}
-        <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
+    <View style={{ height: "100%" }}>
+      {/* VocalWise Logo */}
+      <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
 
-        {/* Menu icon */}
-        {Platform.OS !== "web" && (
-          <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
-            <Icon name="menu" size={40} color="#CCC" />
-          </TouchableOpacity>
-        )}
+      {/* Menu icon */}
+      {Platform.OS !== "web" && (
+        <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
+          <Icon name="menu" size={40} color="#CCC" />
+        </TouchableOpacity>
+      )}
 
-        {/* Background overlay with fading effect */}
-        <Animated.View
-          style={[styles.overlay, { opacity: fadeAnim }]}
-          pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
-        />
-        {/* Sidebar Menu */}
-        <Animated.View
-          style={[
-            styles.sidebarMenu,
-            { transform: [{ translateX: slideAnim }] },
-          ]}
-          pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
-        >
-          <TouchableOpacity
-            onPress={toggleMenu}
-            style={styles.closeButton}
-          ></TouchableOpacity>
-          <View style={styles.chatHistoryContent}>
-            <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
-            <ScrollView>
-              {chatHistory.map((chat, index) => (
-                <TouchableOpacity key={index} style={styles.chatHistoryItem}>
-                  <Text style={styles.chatHistoryText}>{chat}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </Animated.View>
-
-        {/* Chat content */}
-        <View style={styles.chatContent}>
-          <FlatList
-            data={fakeConversation}
-            keyExtractor={(_, index) => index}
-            renderItem={({ item }) => <BubbleMessage {...item} />}
-            contentContainerStyle={{
-              gap: 15,
-              paddingLeft: 15,
-              paddingRight: 23,
-              paddingBottom: 15,
-            }}
-            automaticallyAdjustKeyboardInsets
-          />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "position" : undefined}
-            keyboardVerticalOffset={100}
-          >
-            {/* Input field */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                placeholder="¿Listo para aprender?"
-                placeholderTextColor="#CCC"
-                style={styles.input}
-              />
-              <TouchableOpacity style={styles.addFile}>
-                <Icon name="paperclip" size={20} color="#999" />
+      {/* Background overlay with fading effect */}
+      <Animated.View
+        style={[styles.overlay, { opacity: fadeAnim }]}
+        pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
+      />
+      {/* Sidebar Menu */}
+      <Animated.View
+        style={[styles.sidebarMenu, { transform: [{ translateX: slideAnim }] }]}
+        pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
+      >
+        <TouchableOpacity
+          onPress={toggleMenu}
+          style={styles.closeButton}
+        ></TouchableOpacity>
+        <View style={styles.chatHistoryContent}>
+          <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
+          <ScrollView>
+            {chatHistory.map((chat, index) => (
+              <TouchableOpacity key={index} style={styles.chatHistoryItem}>
+                <Text style={styles.chatHistoryText}>{chat}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sendButton}>
-                <Icon name="send" size={20} color="#999" />
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
+            ))}
+          </ScrollView>
         </View>
+      </Animated.View>
+
+      {/* Chat content */}
+      <View style={styles.chatContent}>
+        <FlatList
+          data={fakeConversation}
+          keyExtractor={(_, index) => index}
+          renderItem={({ item }) => <BubbleMessage {...item} />}
+          contentContainerStyle={{
+            gap: 15,
+            paddingLeft: 15,
+            paddingRight: 23,
+            paddingBottom: 15,
+          }}
+          automaticallyAdjustKeyboardInsets
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "position" : undefined}
+          keyboardVerticalOffset={100}
+        >
+          {/* Input field */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="¿Listo para aprender?"
+              placeholderTextColor="#CCC"
+              style={styles.input}
+            />
+            <TouchableOpacity style={styles.addFile}>
+              <Icon name="paperclip" size={20} color="#999" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sendButton}>
+              <Icon name="send" size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-    height: "100%",
-    width: "100%",
-  },
   overlay: {
     zIndex: 5,
     position: "absolute",
@@ -239,18 +222,19 @@ const styles = StyleSheet.create({
       { translateX: Platform.OS === "web" ? -width * 0.185 : -width * 0.37 },
     ], // Centrado dinámico
     opacity: 0.1,
+    //probar inset:0, margin: auto y position relative para centrar
   },
   menuButton: {
     position: "absolute",
-    top: 5,
-    left: 16,
+    top: 10,
+    left: 5,
     zIndex: 6,
   },
   sidebarMenu: {
     zIndex: 5,
     position: "absolute",
     top: 0,
-    left: 0,
+    left: Platform.OS === "web" ? 0 : -33,
     height: "100%",
     backgroundColor: "#333",
     padding: 16,
