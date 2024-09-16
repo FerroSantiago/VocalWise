@@ -157,7 +157,13 @@ export default function Chat() {
           <ScrollView>
             {chatHistory.map((chat, index) => (
               <TouchableOpacity key={index} style={styles.chatHistoryItem}>
-                <Text style={styles.chatHistoryText}>{chat}</Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="head"
+                  style={styles.chatHistoryText}
+                >
+                  {chat}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -238,7 +244,7 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#333",
     padding: 16,
-    width: Platform.OS === "web" ? 256 : width * 0.8,
+    width: Platform.OS === "web" ? width * 0.15 : width * 0.8,
   },
   closeButton: {
     position: "absolute",
