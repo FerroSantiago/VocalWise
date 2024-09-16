@@ -127,7 +127,7 @@ export default function Chat() {
   ];
 
   return (
-    <View style={{ height: "100%" }}>
+    <View style={{ height: "100%", width: "100%" }}>
       {/* VocalWise Logo */}
       <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
 
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     zIndex: 5,
     position: "absolute",
     top: 0,
-    left: Platform.OS === "web" ? 0 : -33,
+    left: 0,
     height: "100%",
     backgroundColor: "#333",
     padding: 16,
@@ -272,10 +272,10 @@ const styles = StyleSheet.create({
   },
   chatContent: {
     zIndex: Platform.OS === "web" ? 10 : 4,
-    flex: 1,
+    flex: "auto",
     justifyContent: "flex-end",
-    width: Platform.OS === "web" ? width - 256 : "100%",
-    marginLeft: Platform.OS === "web" ? "256px" : "2%",
+    width: Platform.OS === "web" ? width - 200 : "100%",
+    marginLeft: Platform.OS === "web" ? width * 0.15 : 0,
     marginTop: 55,
   },
   icon: {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    width: Platform.OS === "web" ? "75%" : "95%",
+    width: Platform.OS === "web" ? "70%" : "95%",
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
