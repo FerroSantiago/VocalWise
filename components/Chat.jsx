@@ -5,7 +5,7 @@ import {
   Text,
   TextInput,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Animated,
   Dimensions,
@@ -133,9 +133,9 @@ export default function Chat() {
 
       {/* Menu icon */}
       {Platform.OS !== "web" && (
-        <TouchableOpacity onPress={toggleMenu} style={styles.menuButton}>
+        <Pressable onPress={toggleMenu} style={styles.menuButton}>
           <Icon name="menu" size={40} color="#CCC" />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Background overlay with fading effect */}
@@ -148,15 +148,12 @@ export default function Chat() {
         style={[styles.sidebarMenu, { transform: [{ translateX: slideAnim }] }]}
         pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
       >
-        <TouchableOpacity
-          onPress={toggleMenu}
-          style={styles.closeButton}
-        ></TouchableOpacity>
+        <Pressable onPress={toggleMenu} style={styles.closeButton}></Pressable>
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
           <ScrollView>
             {chatHistory.map((chat, index) => (
-              <TouchableOpacity key={index} style={styles.chatHistoryItem}>
+              <Pressable key={index} style={styles.chatHistoryItem}>
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="head"
@@ -164,7 +161,7 @@ export default function Chat() {
                 >
                   {chat}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
         </View>
@@ -195,12 +192,29 @@ export default function Chat() {
               placeholderTextColor="#CCC"
               style={styles.input}
             />
-            <TouchableOpacity style={styles.addFile}>
+            <Pressable
+              style={({ pressed }) => [
+                // Cambia la opacidad cuando está presionado
+                {
+                  opacity: pressed ? 0.5 : 1,
+                },
+                styles.addFile,
+              ]}
+            >
               <Icon name="paperclip" size={20} color="#999" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sendButton}>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                // Cambia la opacidad cuando está presionado
+                {
+                  opacity: pressed ? 0.5 : 1,
+                  duration: 300,
+                },
+                styles.sendButton,
+              ]}
+            >
               <Icon name="send" size={20} color="#999" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </View>
