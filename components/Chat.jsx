@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  View,
-  Image,
-  Text,
-  TextInput,
-  ScrollView,
-  Pressable,
-  StyleSheet,
   Animated,
   Dimensions,
-  Platform,
-  KeyboardAvoidingView,
   FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 //import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
@@ -153,7 +153,13 @@ export default function Chat() {
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
           <ScrollView>
             {chatHistory.map((chat, index) => (
-              <Pressable key={index} style={styles.chatHistoryItem}>
+              <Pressable
+                key={index}
+                style={({ pressed }) => [
+                  { opacity: pressed ? 0.5 : 1 },
+                  styles.chatHistoryItem,
+                ]}
+              >
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="head"
