@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -11,14 +10,13 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 //import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Feather";
 
 import logoBlanco from "../assets/logoBlanco.png";
-
-const { width, height } = Dimensions.get("window");
 
 function BubbleMessage({ author, message }) {
   return (
@@ -39,7 +37,9 @@ function BubbleMessage({ author, message }) {
 
 export default function Chat() {
   //const insets = useSafeAreaInsets();
+  const { height, width } = useWindowDimensions();
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
+
   const slideAnim = useRef(
     new Animated.Value(Platform.OS === "web" ? 0 : -256)
   ).current;
@@ -62,7 +62,7 @@ export default function Chat() {
         useNativeDriver: true,
       }).start();
     }
-  }, [isMenuOpen]);
+  }, [isMenuOpen, width]);
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -129,7 +129,23 @@ export default function Chat() {
   return (
     <View style={{ height: "100%", width: "100%" }}>
       {/* VocalWise Logo */}
-      <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
+      <Image
+        source={logoBlanco}
+        style={[
+          {
+            width: Platform.OS === "web" ? width * 0.4 : width * 0.85,
+            height: Platform.OS === "web" ? height * 0.4 : height * 0.85,
+            transform: [
+              {
+                translateX:
+                  Platform.OS === "web" ? -width * 0.185 : -width * 0.37,
+              },
+            ],
+          },
+          styles.logo,
+        ]}
+        resizeMode="contain"
+      />
 
       {/* Menu icon */}
       {Platform.OS !== "web" && (
@@ -143,9 +159,16 @@ export default function Chat() {
         style={[styles.overlay, { opacity: fadeAnim }]}
         pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
       />
+
       {/* Sidebar Menu */}
       <Animated.View
-        style={[styles.sidebarMenu, { transform: [{ translateX: slideAnim }] }]}
+        style={[
+          styles.sidebarMenu,
+          {
+            width: Platform.OS === "web" ? width * 0.15 : width * 0.8,
+            transform: [{ translateX: slideAnim }],
+          },
+        ]}
         pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
       >
         <Pressable onPress={toggleMenu} style={styles.closeButton}></Pressable>
@@ -174,7 +197,15 @@ export default function Chat() {
       </Animated.View>
 
       {/* Chat content */}
-      <View style={styles.chatContent}>
+      <View
+        style={[
+          {
+            width: Platform.OS === "web" ? width - 200 : "100%",
+            marginLeft: Platform.OS === "web" ? width * 0.15 : 0,
+          },
+          styles.chatContent,
+        ]}
+      >
         <FlatList
           data={fakeConversation}
           keyExtractor={(_, index) => index}
@@ -240,13 +271,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     position: "absolute",
-    width: Platform.OS === "web" ? width * 0.4 : width * 0.85,
-    height: Platform.OS === "web" ? height * 0.4 : height * 0.85,
     top: Platform.OS === "web" ? "25%" : "0",
     left: Platform.OS === "web" ? "55%" : "45%",
-    transform: [
-      { translateX: Platform.OS === "web" ? -width * 0.185 : -width * 0.37 },
-    ], // Centrado dinámico
     opacity: 0.1,
     //probar inset:0, margin: auto y position relative para centrar
   },
@@ -264,7 +290,6 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#333",
     padding: 16,
-    width: Platform.OS === "web" ? width * 0.15 : width * 0.8,
   },
   closeButton: {
     position: "absolute",
@@ -294,8 +319,7 @@ const styles = StyleSheet.create({
     zIndex: Platform.OS === "web" ? 10 : 4,
     flex: "auto",
     justifyContent: "flex-end",
-    width: Platform.OS === "web" ? width - 200 : "100%",
-    marginLeft: Platform.OS === "web" ? width * 0.15 : 0,
+
     marginTop: 55,
   },
   icon: {
