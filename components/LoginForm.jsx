@@ -1,21 +1,38 @@
 import React, { useState } from "react";
 import {
-  View,
+  Image,
+  SafeAreaView,
+  StyleSheet,
   Text,
   TextInput,
-  Image,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
+  View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.png";
 
+import appFirebase from "../credenciales";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "expo-router";
+
+const auth = getAuth(appFirebase);
+
 export default function LoginForm() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+
+  const login = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/"); // Navegación después de la alerta
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,9 +43,9 @@ export default function LoginForm() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Usuario"
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            placeholder="Email"
             placeholderTextColor="#9CA3AF"
           />
         </View>
@@ -36,7 +53,7 @@ export default function LoginForm() {
           <TextInput
             style={styles.passwordInput}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => setPassword(text)}
             placeholder="Contraseña"
             placeholderTextColor="#9CA3AF"
             secureTextEntry={!showPassword}
@@ -59,7 +76,7 @@ export default function LoginForm() {
           />
           <Text style={styles.rememberMeText}>Recordarme</Text>
         </View>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={login}>
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <View style={styles.links}>
