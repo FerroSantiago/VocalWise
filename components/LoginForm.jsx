@@ -28,7 +28,7 @@ export default function LoginForm() {
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/"); // Navegación después de la alerta
+      router.push("/");
     } catch (error) {
       console.log(error);
     }
@@ -80,7 +80,7 @@ export default function LoginForm() {
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <View style={styles.links}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/register")}>
             <Text style={styles.linkText}>Registrarme</Text>
           </TouchableOpacity>
           <TouchableOpacity>

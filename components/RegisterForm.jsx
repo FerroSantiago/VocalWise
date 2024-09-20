@@ -1,19 +1,101 @@
 import React, { useState } from "react";
 import {
-  View,
+  Image,
+  SafeAreaView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Image,
+  View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.png";
+import appFirebase from "../credenciales";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { useRouter } from "expo-router";
+
+const auth = getAuth(appFirebase);
+const firestore = getFirestore(appFirebase);
 
 export default function RegistrationForm() {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+
+  const [errors, setErrors] = useState({});
+  const router = useRouter();
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validateFields = () => {
+    let valid = true;
+    let newErrors = {};
+
+    if (!username) {
+      newErrors.username = "El campo de usuario no puede estar vacío.";
+      valid = false;
+    }
+
+    if (!email) {
+      newErrors.email = "El campo de email no puede estar vacío.";
+      valid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = "Por favor ingrese un email válido.";
+      valid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "El campo de contraseña no puede estar vacío.";
+      valid = false;
+    } else if (password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres.";
+      valid = false;
+    }
+
+    if (!repeatPassword) {
+      newErrors.repeatPassword =
+        "El campo de repetir contraseña no puede estar vacío.";
+      valid = false;
+    } else if (password !== repeatPassword) {
+      newErrors.repeatPassword = "Las contraseñas no coinciden.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+    return valid;
+  };
+
+  const register = async () => {
+    // Validar que los campos no estén vacíos
+    if (!validateFields()) return;
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await setDoc(doc(firestore, "users", user.uid), {
+        username: username,
+        email: email,
+      });
+
+      console.log("Registro OK");
+      router.push("/"); // Navegación después de registrar
+    } catch (error) {
+      console.log(error);
+      console.log("Error", "No se pudo registrar el usuario.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -21,55 +103,92 @@ export default function RegistrationForm() {
         <View style={styles.logoContainer}>
           <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
         </View>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Usuario"
-            placeholderTextColor="#9CA3AF"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="email-address"
-          />
-          <View style={styles.passwordContainer}>
+        <View style={styles.inputsContainer}>
+          <View style={styles.inputContainer}>
             <TextInput
-              style={styles.passwordInput}
-              placeholder="Contraseña"
+              style={[styles.input, errors.username ? styles.errorInput : null]}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Usuario"
               placeholderTextColor="#9CA3AF"
-              secureTextEntry={!showPassword}
             />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Feather
-                name={showPassword ? "eye-off" : "eye"}
-                size={24}
-                color="#9CA3AF"
-              />
-            </TouchableOpacity>
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            )}
           </View>
-          <View style={styles.passwordContainer}>
+          <View style={styles.inputContainer}>
             <TextInput
-              style={styles.passwordInput}
-              placeholder="Repetir Contraseña"
+              style={[styles.input, errors.email ? styles.errorInput : null]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
               placeholderTextColor="#9CA3AF"
-              secureTextEntry={!showConfirmPassword}
+              keyboardType="email-address"
             />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              <Feather
-                name={showConfirmPassword ? "eye-off" : "eye"}
-                size={24}
-                color="#9CA3AF"
-              />
-            </TouchableOpacity>
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
           </View>
-          <TouchableOpacity style={styles.button}>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  errors.password ? styles.errorInput : null,
+                ]}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Contraseña"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Feather
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={24}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
+          </View>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={[
+                  styles.passwordInput,
+                  errors.repeatPassword ? styles.errorInput : null,
+                ]}
+                value={repeatPassword}
+                onChangeText={setRepeatPassword}
+                placeholder="Repetir Contraseña"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!showRepeatPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowRepeatPassword(!showRepeatPassword)}
+              >
+                <Feather
+                  name={showRepeatPassword ? "eye-off" : "eye"}
+                  size={24}
+                  color="#9CA3AF"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.repeatPassword && (
+              <Text style={styles.errorText}>{errors.repeatPassword}</Text>
+            )}
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={register}>
             <Text style={styles.buttonText}>Register</Text>
           </TouchableOpacity>
         </View>
@@ -111,9 +230,12 @@ const styles = StyleSheet.create({
     height: 70,
     width: 70,
   },
-  inputContainer: {
+  inputsContainer: {
     width: "100%",
     marginTop: 64,
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
   input: {
     backgroundColor: "#fff",
@@ -122,12 +244,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 12,
     color: "black",
-    marginBottom: 16,
   },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
   },
   passwordInput: {
     flex: 1,
@@ -145,6 +265,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#4B5563",
     padding: 12,
+    marginTop: 10,
     borderRadius: 4,
     alignItems: "center",
   },
@@ -153,8 +274,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+  },
+  errorInput: {
+    borderColor: "red",
+    borderWidth: 2.5,
+  },
   termsText: {
-    marginTop: 16,
+    marginTop: 10,
     fontSize: 12,
     color: "#9CA3AF",
     textAlign: "center",
