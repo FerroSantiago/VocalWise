@@ -93,7 +93,19 @@ export default function RegistrationForm() {
       router.push("/"); // Navegación después de registrar
     } catch (error) {
       console.log(error);
-      console.log("Error", "No se pudo registrar el usuario.");
+
+      // Verificar si el el email ya está en uso
+      if (error.code === "auth/email-already-in-use") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          email: "El email ya está en uso.",
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          general: "No se pudo registrar el usuario. Intente nuevamente.",
+        }));
+      }
     }
   };
 
