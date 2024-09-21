@@ -22,6 +22,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const router = useRouter();
 
@@ -31,6 +32,7 @@ export default function LoginForm() {
       router.push("/");
     } catch (error) {
       console.log(error);
+      setErrorMessage("Usuario o contraseña incorrecta.");
     }
   };
 
@@ -69,6 +71,11 @@ export default function LoginForm() {
             />
           </TouchableOpacity>
         </View>
+
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text> // Mostrar error si existe
+        ) : null}
+
         <View style={styles.rememberMeContainer}>
           <TouchableOpacity
             style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
@@ -226,5 +233,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 10,
+  },
+  errorText: {
+    color: "red", // Color para el mensaje de error
+    textAlign: "center",
+    marginBottom: 16,
   },
 });
