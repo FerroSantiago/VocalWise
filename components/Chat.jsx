@@ -18,6 +18,8 @@ import Icon from "react-native-vector-icons/Feather";
 
 import logoBlanco from "../assets/logoBlanco.png";
 
+import FileUploading from "./FlieUploading";
+
 function BubbleMessage({ author, message }) {
   return (
     <View
@@ -229,29 +231,7 @@ export default function Chat() {
               placeholderTextColor="#CCC"
               style={styles.input}
             />
-            <Pressable
-              style={({ pressed }) => [
-                // Cambia la opacidad cuando está presionado
-                {
-                  opacity: pressed ? 0.5 : 1,
-                },
-                styles.addFile,
-              ]}
-            >
-              <Icon name="paperclip" size={20} color="#999" />
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                // Cambia la opacidad cuando está presionado
-                {
-                  opacity: pressed ? 0.5 : 1,
-                  duration: 300,
-                },
-                styles.sendButton,
-              ]}
-            >
-              <Icon name="send" size={20} color="#999" />
-            </Pressable>
+            <FileUploading />
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -321,9 +301,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
 
     marginTop: 55,
-  },
-  icon: {
-    marginLeft: 8,
   },
   inputContainer: {
     flexDirection: "row",
