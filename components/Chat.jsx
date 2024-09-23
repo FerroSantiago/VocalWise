@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -220,20 +219,7 @@ export default function Chat() {
           }}
           automaticallyAdjustKeyboardInsets
         />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "position" : undefined}
-          keyboardVerticalOffset={100}
-        >
-          {/* Input field */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="¿Listo para aprender?"
-              placeholderTextColor="#CCC"
-              style={styles.input}
-            />
-            <FileUploading />
-          </View>
-        </KeyboardAvoidingView>
+        <FileUploading></FileUploading>
       </View>
     </View>
   );
@@ -301,25 +287,5 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
 
     marginTop: 55,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    width: Platform.OS === "web" ? "70%" : "95%",
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-    backgroundColor: "#444",
-    marginLeft: Platform.OS === "web" ? 150 : 2,
-    marginBottom: 10,
-  },
-  input: {
-    flex: 1,
-    color: "#CCC",
-  },
-  addFile: {
-    marginRight: 10,
-  },
-  sendButton: {
-    paddingLeft: 10,
   },
 });
