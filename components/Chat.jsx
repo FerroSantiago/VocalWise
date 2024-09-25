@@ -3,7 +3,6 @@ import {
   Animated,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -12,8 +11,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-//import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/Feather";
+
+import { useRouter } from "expo-router";
+
+import { getAuth, signOut } from "firebase/auth";
 
 import logoBlanco from "../assets/logoBlanco.png";
 
@@ -37,9 +40,10 @@ function BubbleMessage({ author, message }) {
 }
 
 export default function Chat() {
-  //const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
+  const [user, setUser] = useState(null);
+  const router = useRouter();
 
   const slideAnim = useRef(
     new Animated.Value(Platform.OS === "web" ? 0 : -256)
@@ -64,6 +68,41 @@ export default function Chat() {
       }).start();
     }
   }, [isMenuOpen, width]);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      // Verifica si hay un usuario autenticado en AsyncStorage
+      const storedUser = await AsyncStorage.getItem("user");
+
+      if (storedUser) {
+        setUser(JSON.parse(storedUser)); // Si hay usuario, lo guardamos en el estado
+      } else {
+        // Verifica con Firebase si el usuario está autenticado
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+
+        if (currentUser) {
+          setUser(currentUser); // Si el usuario está autenticado, lo guardamos en el estado
+        } else {
+          router.push("/login"); // Si no hay usuario, redirige a la pantalla de login
+        }
+      }
+    };
+
+    checkUser();
+  }, []);
+
+  const logout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      await AsyncStorage.removeItem("user");
+      setUser(null);
+      router.push("/login"); // Redirigir al login
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
 
   const toggleMenu = () => {
     if (Platform.OS !== "web") {
@@ -172,7 +211,6 @@ export default function Chat() {
         ]}
         pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
       >
-        <Pressable onPress={toggleMenu} style={styles.closeButton}></Pressable>
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
           <ScrollView>
@@ -195,6 +233,24 @@ export default function Chat() {
             ))}
           </ScrollView>
         </View>
+        {user ? (
+          <Pressable onPress={logout} style={styles.accountButton}>
+            <Icon name="user" size={25} color="#CCC" />
+            <Text style={[{ fontSize: 12 }, styles.chatHistoryText]}>
+              Cerrar sesión
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => router.push("/login")}
+            style={styles.accountButton}
+          >
+            <Icon name="user" size={25} color="#CCC" />
+            <Text style={[{ fontSize: 12 }, styles.chatHistoryText]}>
+              Iniciar sesión
+            </Text>
+          </Pressable>
+        )}
       </Animated.View>
 
       {/* Chat content */}
@@ -257,14 +313,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     padding: 16,
   },
-  closeButton: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-  },
   chatHistoryContent: {
     marginTop: Platform.OS === "web" ? 4 : 50,
-    height: "100%",
   },
   chatHistoryTitle: {
     color: "white",
@@ -280,6 +330,15 @@ const styles = StyleSheet.create({
   },
   chatHistoryText: {
     color: "white",
+  },
+  accountButton: {
+    paddingVertical: 5,
+    backgroundColor: "#444",
+    borderRadius: 10,
+    marginTop: 20,
+    alignSelf: "center",
+    alignItems: "center",
+    width: "70%",
   },
   chatContent: {
     zIndex: Platform.OS === "web" ? 10 : 4,

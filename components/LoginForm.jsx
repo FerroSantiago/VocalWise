@@ -13,6 +13,8 @@ import logoBlanco from "../assets/logoBlanco.png";
 
 import appFirebase from "../credenciales";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useRouter } from "expo-router";
 
 const auth = getAuth(appFirebase);
@@ -28,7 +30,14 @@ export default function LoginForm() {
 
   const login = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await AsyncStorage.setItem("user", JSON.stringify(userCredential.user));
+
       router.push("/");
     } catch (error) {
       console.log(error);
