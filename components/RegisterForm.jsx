@@ -90,7 +90,7 @@ export default function RegistrationForm() {
       });
 
       console.log("Registro OK");
-      router.push("/"); // Navegación después de registrar
+      router.push("/chat"); // Navegación después de registrar
     } catch (error) {
       console.log(error);
 

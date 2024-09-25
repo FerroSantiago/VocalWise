@@ -315,6 +315,7 @@ const styles = StyleSheet.create({
   },
   chatHistoryContent: {
     marginTop: Platform.OS === "web" ? 4 : 50,
+    flex: 1,
   },
   chatHistoryTitle: {
     color: "white",
