@@ -1,15 +1,12 @@
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-const logoBlanco = require("../assets/logoBlanco.png");
+import LogoAnimado from "./LogoAnimado";
+
+import { useRouter } from "expo-router";
 
 export default function Landing() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <View style={styles.navContainer}>
@@ -40,7 +37,7 @@ export default function Landing() {
             onPress={() => router.push("/login")}
             style={[{ backgroundColor: "white" }, styles.navSectionButton]}
           >
-            <Text style={{ color: "#444" }}>Ingresar sesion</Text>
+            <Text style={{ color: "#444" }}>Iniciar sesion</Text>
           </Pressable>
         </View>
       </View>
@@ -61,7 +58,7 @@ export default function Landing() {
             Descubre cómo nuestra plataforma puede cambiar tu vida.
           </Text>
           <View>
-            <Image style={styles.logo} source={logoBlanco} />
+            <LogoAnimado></LogoAnimado>
           </View>
         </View>
       </ScrollView>
