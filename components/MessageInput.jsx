@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   TextInput,
@@ -8,16 +8,16 @@ import {
   Platform,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+
 import Icon from "react-native-vector-icons/Feather";
 
-const FileUploading = () => {
+const MessageInput = () => {
   const [inputText, setInputText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
 
   const uploadFile = async () => {
     try {
-      console.log("Iniciando selección de archivo...");
       const result = await DocumentPicker.getDocumentAsync({
         type: [
           "application/pdf",
@@ -50,6 +50,11 @@ const FileUploading = () => {
     }
   };
 
+  const removeFile = () => {
+    setFileName("");
+    setFileObject(null);
+  };
+
   const sendMessage = async () => {
     //Agregar implementacion de enviar mensaje
   };
@@ -61,6 +66,9 @@ const FileUploading = () => {
           <View style={styles.filePreview}>
             <Icon name="file" size={20} color="#DDD" />
             <Text style={styles.fileName}>{fileName}</Text>
+            <Pressable onPress={removeFile} style={styles.removeButton}>
+              <Icon name="x" size={10} color="#FFF" />
+            </Pressable>
           </View>
         )}
         <View style={styles.textInputContainer}>
@@ -124,6 +132,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: "bold",
   },
+  removeButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "gray",
+    borderRadius: 15,
+    padding: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   textInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -144,4 +162,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FileUploading;
+export default MessageInput;
