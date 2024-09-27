@@ -87,6 +87,7 @@ export default function RegistrationForm() {
       await setDoc(doc(firestore, "users", user.uid), {
         username: username,
         email: email,
+        userId: user.uid,
       });
 
       console.log("Registro OK");
