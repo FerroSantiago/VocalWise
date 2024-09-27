@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
     color: "#CCC",
     paddingHorizontal: 15,
     marginLeft: 10,
+    outlineStyle: "none",
   },
   buttonContainer: {
     flexDirection: "row",

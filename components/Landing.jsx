@@ -106,6 +106,6 @@ const styles = StyleSheet.create({
   welcomeSection: {
     alignItems: "center",
     padding: 16,
-    marginTop: 50,
+    marginTop: 30,
   },
 });

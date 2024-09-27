@@ -20,7 +20,7 @@ import { getAuth, signOut } from "firebase/auth";
 
 import logoBlanco from "../assets/logoBlanco.png";
 
-import FileUploading from "./FlieUploading";
+import MessageInput from "./MessageInput";
 
 function BubbleMessage({ author, message }) {
   return (
@@ -257,7 +257,6 @@ export default function Chat() {
       <View
         style={[
           {
-            width: Platform.OS === "web" ? width - 200 : "100%",
             marginLeft: Platform.OS === "web" ? width * 0.15 : 0,
           },
           styles.chatContent,
@@ -275,7 +274,7 @@ export default function Chat() {
           }}
           automaticallyAdjustKeyboardInsets
         />
-        <FileUploading></FileUploading>
+        <MessageInput></MessageInput>
       </View>
     </View>
   );
@@ -343,7 +342,7 @@ const styles = StyleSheet.create({
   },
   chatContent: {
     zIndex: Platform.OS === "web" ? 10 : 4,
-    flex: "auto",
+    flex: 1,
     justifyContent: "flex-end",
 
     marginTop: 55,
