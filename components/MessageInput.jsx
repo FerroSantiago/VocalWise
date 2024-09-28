@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import {
-  Text,
-  TextInput,
+  Platform,
   Pressable,
   StyleSheet,
+  Text,
+  TextInput,
   View,
-  Platform,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  setDoc,
+  serverTimestamp,
+  doc,
+} from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Icon from "react-native-vector-icons/Feather";
 
-const MessageInput = () => {
+const MessageInput = ({ user, chatId }) => {
   const [inputText, setInputText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
@@ -56,7 +64,57 @@ const MessageInput = () => {
   };
 
   const sendMessage = async () => {
-    //Agregar implementacion de enviar mensaje
+    if (!inputText.trim() && !fileObject) return;
+
+    try {
+      const db = getFirestore();
+      const storage = getStorage();
+      let fileUrl = null;
+
+      if (fileObject) {
+        const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
+        await uploadBytes(fileRef, fileObject);
+        fileUrl = await getDownloadURL(fileRef);
+      }
+
+      const messageData = {
+        text: inputText.trim(),
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+        userName: user.displayName || user.email,
+        fileUrl: fileUrl,
+        fileName: fileName,
+      };
+
+      if (!chatId) {
+        const newChatRef = await addDoc(collection(db, "chats"), {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+          lastMessage: inputText.trim(),
+          lastMessageTime: serverTimestamp(),
+        });
+        chatId = newChatRef.id;
+      } else {
+        // Actualizar el último mensaje del chat existente
+        await setDoc(
+          doc(db, "chats", chatId),
+          {
+            lastMessage: inputText.trim(),
+            lastMessageTime: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      // Añadir el mensaje a la subcolección de mensajes del chat
+      await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
+
+      setInputText("");
+      setFileName("");
+      setFileObject(null);
+    } catch (error) {
+      console.error("Error al enviar el mensaje:", error);
+    }
   };
 
   return (

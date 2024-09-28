@@ -13,25 +13,40 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  where,
+} from "firebase/firestore";
 
 import logoBlanco from "../assets/logoBlanco.png";
 
 import MessageInput from "./MessageInput";
 import SideMenu from "./SideMenu";
 
-function BubbleMessage({ author, message }) {
+function BubbleMessage({ author, message, fileName, fileUrl }) {
+  const isUserMessage = author === "user";
   return (
     <View
       style={{
         maxWidth: "80%",
         borderRadius: 15,
         padding: 10,
-        alignSelf: author === "user" ? "flex-end" : "flex-start",
-        backgroundColor:
-          author === "user" ? "rgba(51,51,51,.5)" : "rgba(102,102,102,.5)",
+        alignSelf: isUserMessage ? "flex-end" : "flex-start",
+        backgroundColor: isUserMessage
+          ? "rgba(51,51,51,.5)"
+          : "rgba(102,102,102,.5)",
       }}
     >
       <Text style={{ color: "#EEE" }}>{message}</Text>
+      {fileName && (
+        <Text style={{ color: "#BBB", marginTop: 5 }}>
+          Archivo adjunto: {fileName}
+        </Text>
+      )}
     </View>
   );
 }
@@ -39,6 +54,9 @@ function BubbleMessage({ author, message }) {
 export default function Chat() {
   const { height, width } = useWindowDimensions();
   const [user, setUser] = useState(null);
+  const [chats, setChats] = useState([]);
+  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
 
   const router = useRouter();
 
@@ -65,6 +83,53 @@ export default function Chat() {
     checkUser();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const db = getFirestore();
+      const chatsQuery = query(
+        collection(db, "chats"),
+        where("userId", "==", user.uid),
+        orderBy("lastMessageTime", "desc")
+      );
+
+      const unsubscribeChats = onSnapshot(chatsQuery, (querySnapshot) => {
+        const fetchedChats = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setChats(fetchedChats);
+
+        // Seleccionar el primer chat por defecto si no hay ninguno seleccionado
+        if (fetchedChats.length > 0 && !selectedChatId) {
+          setSelectedChatId(fetchedChats[0].id);
+        }
+      });
+
+      return () => unsubscribeChats();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedChatId) {
+      const db = getFirestore();
+      const messagesQuery = query(
+        collection(db, `chats/${selectedChatId}/messages`),
+        orderBy("createdAt", "asc")
+      );
+
+      const unsubscribeMessages = onSnapshot(messagesQuery, (querySnapshot) => {
+        const fetchedMessages = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          author: doc.data().userId === user.uid ? "user" : "other",
+        }));
+        setMessages(fetchedMessages);
+      });
+
+      return () => unsubscribeMessages();
+    }
+  }, [selectedChatId, user]);
+
   return (
     <View style={styles.container}>
       {/* VocalWise Logo */}
@@ -86,7 +151,14 @@ export default function Chat() {
         resizeMode="contain"
       />
 
-      <SideMenu height={height} width={width} user={user}></SideMenu>
+      <SideMenu
+        height={height}
+        width={width}
+        user={user}
+        chats={chats}
+        selectedChatId={selectedChatId}
+        onSelectChat={setSelectedChatId}
+      ></SideMenu>
 
       {/* Chat content */}
       <View
@@ -98,8 +170,16 @@ export default function Chat() {
         ]}
       >
         <FlatList
-          keyExtractor={(_, index) => index}
-          renderItem={({ item }) => <BubbleMessage {...item} />}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <BubbleMessage
+              author={item.author}
+              message={item.text}
+              fileName={item.fileName}
+              fileUrl={item.fileUrl}
+            />
+          )}
           contentContainerStyle={{
             gap: 15,
             paddingLeft: 15,
@@ -108,7 +188,7 @@ export default function Chat() {
           }}
           automaticallyAdjustKeyboardInsets
         />
-        <MessageInput></MessageInput>
+        {user && <MessageInput user={user} />}
       </View>
     </View>
   );

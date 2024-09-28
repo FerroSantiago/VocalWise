@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Animated,
   Platform,
@@ -14,7 +14,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useRouter } from "expo-router";
 
-const SideMenu = ({ height, width }) => {
+const SideMenu = ({
+  height,
+  width,
+  user,
+  chats,
+  selectedChatId,
+  onSelectChat,
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
 
   const router = useRouter();
@@ -90,31 +97,28 @@ const SideMenu = ({ height, width }) => {
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
           <ScrollView>
-            {chatHistory.map((chat, index) => (
+            {chats.map((chat) => (
               <Pressable
-                key={index}
-                style={({ pressed }) => [
-                  { opacity: pressed ? 0.5 : 1 },
-                  styles.chatHistoryItem,
+                key={chat.id}
+                style={[
+                  styles.historyItem,
+                  selectedChatId === chat.id && styles.selectedHistoryItem,
                 ]}
+                onPress={() => onSelectChat(chat.id)}
               >
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="head"
-                  style={styles.chatHistoryText}
-                >
-                  {chat}
+                <Text style={styles.historyItemText} numberOfLines={1}>
+                  {chat.lastMessage || "Nuevo chat"}
                 </Text>
               </Pressable>
             ))}
           </ScrollView>
         </View>
-        <Pressable onPress={logout} style={styles.accountButton}>
-          <Icon name="user" size={25} color="#CCC" />
-          <Text style={[{ fontSize: 12 }, styles.chatHistoryText]}>
-            Cerrar sesión
-          </Text>
-        </Pressable>
+        <View style={{ alignSelf: "center" }}>
+          <Pressable onPress={logout} style={styles.accountButton}>
+            <Icon name="log-out" size={25} color="#CCC" />
+          </Pressable>
+          <Text style={{ color: "white", marginTop: 5 }}>{user?.email}</Text>
+        </View>
       </Animated.View>
     </View>
   );
@@ -146,13 +150,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
   },
-  chatHistoryItem: {
+  historyItem: {
     padding: 8,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: "#444",
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderWidth: 1,
   },
-  chatHistoryText: {
+  selectedHistoryItem: {
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+  },
+  historyItemText: {
     color: "white",
   },
   accountButton: {
