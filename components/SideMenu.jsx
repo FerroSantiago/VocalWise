@@ -9,10 +9,16 @@ import {
   View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useRouter } from "expo-router";
+
+import {
+  getFirestore,
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const SideMenu = ({
   height,
@@ -65,7 +71,20 @@ const SideMenu = ({
     }
   };
 
-  const chatHistory = ["Prueba", "Prueba2", "Prueba3"];
+  const createNewChat = async () => {
+    try {
+      const db = getFirestore();
+      const newChatRef = await addDoc(collection(db, "chats"), {
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        lastMessage: "Nuevo chat",
+        lastMessageTime: serverTimestamp(),
+      });
+      onSelectChat(newChatRef.id);
+    } catch (error) {
+      console.error("Error al crear un nuevo chat:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -96,6 +115,10 @@ const SideMenu = ({
       >
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
+          <Pressable onPress={createNewChat} style={styles.newChatButton}>
+            <Icon name="plus" size={20} color="#CCC" />
+            <Text style={styles.newChatButtonText}>Nuevo Chat</Text>
+          </Pressable>
           <ScrollView>
             {chats.map((chat) => (
               <Pressable
@@ -115,7 +138,7 @@ const SideMenu = ({
         </View>
         <View style={{ alignSelf: "center" }}>
           <Pressable onPress={logout} style={styles.accountButton}>
-            <Icon name="log-out" size={25} color="#CCC" />
+            <Icon name="log-out" size={20} color="#CCC" />
           </Pressable>
           <Text style={{ color: "white", marginTop: 5 }}>{user?.email}</Text>
         </View>
@@ -149,6 +172,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 16,
+  },
+  newChatButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#666",
+    padding: 5,
+    borderRadius: 5,
+    marginBottom: 25,
+  },
+  newChatButtonText: {
+    color: "#FFF",
+    marginLeft: 10,
   },
   historyItem: {
     padding: 8,

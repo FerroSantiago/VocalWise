@@ -188,7 +188,7 @@ export default function Chat() {
           }}
           automaticallyAdjustKeyboardInsets
         />
-        {user && <MessageInput user={user} />}
+        {user && <MessageInput user={user} chatId={selectedChatId} />}
       </View>
     </View>
   );

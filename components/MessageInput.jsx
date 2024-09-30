@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Icon from "react-native-vector-icons/Feather";
 import * as DocumentPicker from "expo-document-picker";
 import {
   getFirestore,
@@ -17,7 +18,6 @@ import {
   doc,
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import Icon from "react-native-vector-icons/Feather";
 
 const MessageInput = ({ user, chatId }) => {
   const [inputText, setInputText] = useState("");
@@ -94,17 +94,16 @@ const MessageInput = ({ user, chatId }) => {
           lastMessageTime: serverTimestamp(),
         });
         chatId = newChatRef.id;
-      } else {
-        // Actualizar el último mensaje del chat existente
-        await setDoc(
-          doc(db, "chats", chatId),
-          {
-            lastMessage: inputText.trim(),
-            lastMessageTime: serverTimestamp(),
-          },
-          { merge: true }
-        );
       }
+      // Actualizar el último mensaje del chat existente
+      await setDoc(
+        doc(db, "chats", chatId),
+        {
+          lastMessage: inputText.trim(),
+          lastMessageTime: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       // Añadir el mensaje a la subcolección de mensajes del chat
       await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
