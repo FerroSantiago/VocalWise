@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   StyleSheet,
@@ -26,6 +27,7 @@ export default function RegistrationForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const router = useRouter();
 
@@ -76,6 +78,8 @@ export default function RegistrationForm() {
     // Validar que los campos no estén vacíos
     if (!validateFields()) return;
 
+    setIsLoading(true);
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -91,7 +95,10 @@ export default function RegistrationForm() {
       });
 
       console.log("Registro OK");
-      router.push("/chat"); // Navegación después de registrar
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/chat");
+      }, 1500);
     } catch (error) {
       console.log(error);
 
@@ -107,6 +114,7 @@ export default function RegistrationForm() {
           general: "No se pudo registrar el usuario. Intente nuevamente.",
         }));
       }
+      setIsLoading(false);
     }
   };
 
@@ -201,9 +209,20 @@ export default function RegistrationForm() {
             )}
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={register}>
-            <Text style={styles.buttonText}>Register</Text>
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.disabledButton]}
+            onPress={register}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Registrarse</Text>
+            )}
           </TouchableOpacity>
+          {errors.general && (
+            <Text style={[styles.errorText]}>{errors.general}</Text>
+          )}
         </View>
         <Text style={styles.termsText}>
           Al crear una cuenta aquí, aceptas nuestras{" "}
@@ -286,6 +305,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   errorText: {
     color: "red",
