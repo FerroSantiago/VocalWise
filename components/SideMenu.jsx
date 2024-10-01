@@ -27,6 +27,7 @@ const SideMenu = ({
   chats,
   selectedChatId,
   onSelectChat,
+  setMessages,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
 
@@ -81,6 +82,7 @@ const SideMenu = ({
         lastMessageTime: serverTimestamp(),
       });
       onSelectChat(newChatRef.id);
+      setMessages([]);
     } catch (error) {
       console.error("Error al crear un nuevo chat:", error);
     }

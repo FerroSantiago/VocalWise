@@ -23,6 +23,7 @@ const MessageInput = ({ user, chatId }) => {
   const [inputText, setInputText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
+  const [isSending, setIsSending] = useState(false);
 
   const uploadFile = async () => {
     try {
@@ -67,6 +68,7 @@ const MessageInput = ({ user, chatId }) => {
     if (!inputText.trim() && !fileObject) return;
 
     try {
+      setIsSending(true);
       const db = getFirestore();
       const storage = getStorage();
       let fileUrl = null;
@@ -113,6 +115,8 @@ const MessageInput = ({ user, chatId }) => {
       setFileObject(null);
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -148,6 +152,7 @@ const MessageInput = ({ user, chatId }) => {
             </Pressable>
             <Pressable
               onPress={sendMessage}
+              disabled={isSending}
               style={({ pressed }) => [
                 styles.button,
                 { opacity: pressed ? 0.5 : 1 },

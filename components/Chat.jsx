@@ -158,6 +158,7 @@ export default function Chat() {
         chats={chats}
         selectedChatId={selectedChatId}
         onSelectChat={setSelectedChatId}
+        setMessages={setMessages}
       ></SideMenu>
 
       {/* Chat content */}
@@ -183,7 +184,7 @@ export default function Chat() {
           contentContainerStyle={{
             gap: 15,
             paddingLeft: 15,
-            paddingRight: 23,
+            paddingRight: Platform.OS === "web" ? "15%" : 5,
             paddingBottom: 15,
           }}
           automaticallyAdjustKeyboardInsets
