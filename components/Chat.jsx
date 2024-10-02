@@ -27,7 +27,7 @@ import logoBlanco from "../assets/logoBlanco.png";
 import MessageInput from "./MessageInput";
 import SideMenu from "./SideMenu";
 
-function BubbleMessage({ author, message, fileName, fileUrl }) {
+function BubbleMessage({ author, message, fileName }) {
   const isUserMessage = author === "user";
   return (
     <View
@@ -37,16 +37,14 @@ function BubbleMessage({ author, message, fileName, fileUrl }) {
         padding: 10,
         alignSelf: isUserMessage ? "flex-end" : "flex-start",
         backgroundColor: isUserMessage
-          ? "rgba(51,51,51,.5)"
-          : "rgba(102,102,102,.5)",
+          ? "rgba(51,51,51,.4)"
+          : "rgba(102,102,102,.4)",
       }}
     >
-      <Text style={{ color: "#EEE" }}>{message}</Text>
       {fileName && (
-        <Text style={{ color: "#BBB", marginTop: 5 }}>
-          Archivo adjunto: {fileName}
-        </Text>
+        <Text style={{ color: "#BBB" }}>Archivo adjunto: {fileName}</Text>
       )}
+      <Text style={{ color: "#EEE" }}>{message}</Text>
     </View>
   );
 }
@@ -220,7 +218,6 @@ const styles = StyleSheet.create({
     zIndex: Platform.OS === "web" ? 10 : 4,
     flex: 1,
     justifyContent: "flex-end",
-
     marginTop: 55,
   },
 });
