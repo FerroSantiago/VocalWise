@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   FlatList,
-  Image,
+  ImageBackground,
   Platform,
   StyleSheet,
   Text,
@@ -131,7 +131,7 @@ export default function Chat() {
   return (
     <View style={styles.container}>
       {/* VocalWise Logo */}
-      <Image
+      <ImageBackground
         source={logoBlanco}
         style={[
           {
@@ -198,21 +198,11 @@ const styles = StyleSheet.create({
     height: "100%",
     width: "100%",
   },
-  overlay: {
-    zIndex: 5,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.55)", // Fondo oscuro semitransparente
-  },
   logo: {
     position: "absolute",
     top: Platform.OS === "web" ? "25%" : "0",
     left: Platform.OS === "web" ? "55%" : "45%",
     opacity: 0.1,
-    //probar inset:0, margin: auto y position relative para centrar
   },
   chatContent: {
     zIndex: Platform.OS === "web" ? 10 : 4,

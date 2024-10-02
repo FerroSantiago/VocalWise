@@ -98,7 +98,7 @@ export default function RegistrationForm() {
       setTimeout(() => {
         setIsLoading(false);
         router.push("/chat");
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.log(error);
 

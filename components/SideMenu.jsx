@@ -165,6 +165,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#333",
     padding: 16,
   },
+  overlay: {
+    zIndex: 5,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+  },
   chatHistoryContent: {
     marginTop: Platform.OS === "web" ? 4 : 50,
     flex: 1,

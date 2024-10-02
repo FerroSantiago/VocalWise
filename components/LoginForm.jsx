@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   StyleSheet,
@@ -25,10 +26,12 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
 
   const login = async () => {
+    setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -38,10 +41,14 @@ export default function LoginForm() {
 
       await AsyncStorage.setItem("user", JSON.stringify(userCredential.user));
 
-      router.push("/chat");
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/chat");
+      }, 1000);
     } catch (error) {
       console.log(error);
       setErrorMessage("Usuario o contraseña incorrecta.");
+      setIsLoading(false);
     }
   };
 
@@ -92,8 +99,16 @@ export default function LoginForm() {
           />
           <Text style={styles.rememberMeText}>Recordarme</Text>
         </View>
-        <TouchableOpacity style={styles.button} onPress={login}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity
+          style={[styles.button, isLoading && styles.disabledButton]}
+          onPress={login}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
         </TouchableOpacity>
         <View style={styles.links}>
           <TouchableOpacity onPress={() => router.push("/register")}>
@@ -207,6 +222,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.7,
   },
   links: {
     width: "100%",
