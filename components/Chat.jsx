@@ -27,11 +27,14 @@ import logoBlanco from "../assets/logoBlanco.png";
 import MessageInput from "./MessageInput";
 import SideMenu from "./SideMenu";
 
+import Icon from "react-native-vector-icons/Feather";
+
 function BubbleMessage({ author, message, fileName }) {
   const isUserMessage = author === "user";
   return (
     <View
       style={{
+        margin: 8,
         maxWidth: "80%",
         borderRadius: 15,
         padding: 10,
@@ -42,7 +45,10 @@ function BubbleMessage({ author, message, fileName }) {
       }}
     >
       {fileName && (
-        <Text style={{ color: "#BBB" }}>Archivo adjunto: {fileName}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Icon name="file" size={15} color="#999" />
+          <Text style={{ color: "#BBB", marginLeft: 5 }}>{fileName}</Text>
+        </View>
       )}
       <Text style={{ color: "#EEE" }}>{message}</Text>
     </View>
@@ -55,8 +61,11 @@ export default function Chat() {
   const [chats, setChats] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
 
   const router = useRouter();
+
+  const isWeb = Platform.OS === "web";
 
   useEffect(() => {
     const checkUser = async () => {
@@ -157,6 +166,8 @@ export default function Chat() {
         selectedChatId={selectedChatId}
         onSelectChat={setSelectedChatId}
         setMessages={setMessages}
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
       ></SideMenu>
 
       {/* Chat content */}

@@ -1,4 +1,11 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import LogoAnimado from "./LogoAnimado";
 
@@ -44,7 +51,13 @@ export default function Landing() {
 
       <ScrollView contentContainerStyle={{ paddingTop: 80 }}>
         <View style={styles.welcomeSection}>
-          <Text style={{ fontSize: 55, fontWeight: "bold", color: "white" }}>
+          <Text
+            style={{
+              fontSize: 55,
+              fontWeight: "bold",
+              color: "white",
+            }}
+          >
             Bienvenido a VocalWise
           </Text>
           <Text
@@ -73,7 +86,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 60,
     backgroundColor: "rgba(	68, 68, 68, 0.8)",
     flexDirection: "row",
     alignItems: "center",
@@ -86,22 +98,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  logo: {
-    width: 250,
-    height: 250,
-    margin: 40,
-    resizeMode: "contain",
-  },
   navSectionButton: {
-    marginHorizontal: 8,
+    margin: Platform.OS === "web" ? 8 : 3,
     padding: 7,
     borderRadius: 10,
+    alignItems: "center",
   },
   navSectionText: {
     color: "white",
   },
   accountContainer: {
-    flexDirection: "row",
+    flexDirection: Platform.OS === "web" ? "row" : "column",
   },
   welcomeSection: {
     alignItems: "center",

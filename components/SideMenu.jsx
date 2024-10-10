@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Animated,
   Platform,
@@ -28,32 +28,29 @@ const SideMenu = ({
   selectedChatId,
   onSelectChat,
   setMessages,
+  isMenuOpen,
+  setIsMenuOpen,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
+  const isWeb = Platform.OS === "web";
+  const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const router = useRouter();
 
-  const slideAnim = useRef(
-    new Animated.Value(Platform.OS === "web" ? 0 : -256)
-  ).current;
-  const fadeAnim = useRef(
-    new Animated.Value(Platform.OS === "web" ? 0 : -256)
-  ).current;
-
   useEffect(() => {
-    if (Platform.OS !== "web") {
-      // Solo aplicamos animación en dispositivos móviles
-      Animated.timing(slideAnim, {
-        toValue: isMenuOpen ? 0 : -width * 0.8, // Ancho ajustado en móviles
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-
-      Animated.timing(fadeAnim, {
-        toValue: isMenuOpen ? 1 : 0, // Opacidad para el fondo
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+    if (!isWeb) {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: isMenuOpen ? 0 : -width * 0.85,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: isMenuOpen ? 1 : 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [isMenuOpen, width]);
 
@@ -63,12 +60,6 @@ const SideMenu = ({
       router.push("/login"); // Redirigir al login
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
-    }
-  };
-
-  const toggleMenu = () => {
-    if (Platform.OS !== "web") {
-      setIsMenuOpen(!isMenuOpen);
     }
   };
 
@@ -89,18 +80,25 @@ const SideMenu = ({
   };
 
   return (
-    <View style={styles.container}>
-      {/* Menu icon */}
-      {Platform.OS !== "web" && (
-        <Pressable onPress={toggleMenu} style={styles.menuButton}>
+    <>
+      {!isWeb && (
+        <Pressable
+          onPress={() => setIsMenuOpen(true)}
+          style={styles.menuButton}
+        >
           <Icon name="menu" size={40} color="#CCC" />
         </Pressable>
       )}
-
-      {/* Background overlay with fading effect */}
       <Animated.View
-        style={[styles.overlay, { opacity: fadeAnim }]}
-        pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
+        style={[
+          styles.overlay,
+          {
+            opacity: fadeAnim,
+            display: isWeb ? "none" : "flex",
+          },
+        ]}
+        pointerEvents={isMenuOpen ? "auto" : "none"}
+        onTouchStart={() => setIsMenuOpen(false)}
       />
 
       {/* Sidebar Menu */}
@@ -108,12 +106,12 @@ const SideMenu = ({
         style={[
           styles.sidebarMenu,
           {
-            width: Platform.OS === "web" ? width * 0.15 : width * 0.8,
-            transform: [{ translateX: slideAnim }],
+            width: isWeb ? "100%" : width * 0.8,
+            transform: [{ translateX: isWeb ? 0 : slideAnim }],
             height: height,
+            left: 0,
           },
         ]}
-        pointerEvents={isMenuOpen ? "auto" : "none"} // Control de la interactividad
       >
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
@@ -145,34 +143,31 @@ const SideMenu = ({
           <Text style={{ color: "white", marginTop: 5 }}>{user?.email}</Text>
         </View>
       </Animated.View>
-    </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {},
   menuButton: {
     position: "absolute",
     top: 10,
     left: 5,
-    zIndex: 6,
+    zIndex: 11,
   },
   sidebarMenu: {
-    zIndex: 5,
     position: "absolute",
-    top: 0,
-    left: 0,
     backgroundColor: "#333",
     padding: 16,
+    zIndex: 12,
   },
   overlay: {
-    zIndex: 5,
     position: "absolute",
     top: 0,
     left: 0,
-    width: "100%",
-    height: "100%",
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.55)",
+    zIndex: 11,
   },
   chatHistoryContent: {
     marginTop: Platform.OS === "web" ? 4 : 50,
@@ -210,13 +205,13 @@ const styles = StyleSheet.create({
     color: "white",
   },
   accountButton: {
-    paddingVertical: 5,
+    padding: 10,
     backgroundColor: "#444",
     borderRadius: 10,
-    marginTop: 20,
     alignSelf: "center",
     alignItems: "center",
     width: "70%",
+    marginBottom: Platform.OS === "web" ? 0 : 80,
   },
 });
 

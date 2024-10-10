@@ -106,7 +106,7 @@ const LogoAnimado = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
+    marginTop: Platform.OS === "web" ? 60 : 0,
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
