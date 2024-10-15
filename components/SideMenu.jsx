@@ -79,16 +79,12 @@ const SideMenu = ({
     }
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
     <>
-      {!isWeb && (
-        <Pressable
-          onPress={() => setIsMenuOpen(true)}
-          style={styles.menuButton}
-        >
-          <Icon name="menu" size={40} color="#CCC" />
-        </Pressable>
-      )}
       <Animated.View
         style={[
           styles.overlay,
@@ -106,13 +102,18 @@ const SideMenu = ({
         style={[
           styles.sidebarMenu,
           {
-            width: isWeb ? "100%" : width * 0.8,
+            width: isWeb ? width * 0.15 : width * 0.8,
             transform: [{ translateX: isWeb ? 0 : slideAnim }],
             height: height,
             left: 0,
           },
         ]}
       >
+        {!isWeb && (
+          <Pressable onPress={toggleMenu} style={styles.menuButton}>
+            <Icon name={isMenuOpen ? "x" : "menu"} size={30} color="#CCC" />
+          </Pressable>
+        )}
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
           <Pressable onPress={createNewChat} style={styles.newChatButton}>
@@ -136,11 +137,13 @@ const SideMenu = ({
             ))}
           </ScrollView>
         </View>
-        <View style={{ alignSelf: "center" }}>
+        <View style={styles.userInfoContainer}>
           <Pressable onPress={logout} style={styles.accountButton}>
             <Icon name="log-out" size={20} color="#CCC" />
           </Pressable>
-          <Text style={{ color: "white", marginTop: 5 }}>{user?.email}</Text>
+          <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+            {user.email}
+          </Text>
         </View>
       </Animated.View>
     </>
@@ -151,8 +154,9 @@ const styles = StyleSheet.create({
   menuButton: {
     position: "absolute",
     top: 10,
-    left: 5,
-    zIndex: 11,
+    right: -70,
+    zIndex: 15,
+    padding: 10,
   },
   sidebarMenu: {
     position: "absolute",
@@ -204,14 +208,22 @@ const styles = StyleSheet.create({
   historyItemText: {
     color: "white",
   },
+  userInfoContainer: {
+    alignItems: "center",
+    marginBottom: Platform.OS === "web" ? 20 : 60,
+  },
   accountButton: {
-    padding: 10,
+    padding: 5,
     backgroundColor: "#444",
     borderRadius: 10,
-    alignSelf: "center",
     alignItems: "center",
-    width: "70%",
-    marginBottom: Platform.OS === "web" ? 0 : 80,
+    width: "50%",
+    marginBottom: 5,
+  },
+  userEmail: {
+    color: "white",
+    textAlign: "center",
+    maxWidth: "100%",
   },
 });
 

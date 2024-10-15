@@ -63,9 +63,9 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
 
-  const router = useRouter();
-
   const isWeb = Platform.OS === "web";
+
+  const router = useRouter();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -144,12 +144,11 @@ export default function Chat() {
         source={logoBlanco}
         style={[
           {
-            width: Platform.OS === "web" ? width * 0.4 : width * 0.85,
-            height: Platform.OS === "web" ? height * 0.4 : height * 0.85,
+            width: isWeb ? width * 0.4 : width * 0.85,
+            height: isWeb ? height * 0.4 : height * 0.85,
             transform: [
               {
-                translateX:
-                  Platform.OS === "web" ? -width * 0.185 : -width * 0.37,
+                translateX: isWeb ? -width * 0.185 : -width * 0.37,
               },
             ],
           },
@@ -157,7 +156,6 @@ export default function Chat() {
         ]}
         resizeMode="contain"
       />
-
       <SideMenu
         height={height}
         width={width}
@@ -172,12 +170,7 @@ export default function Chat() {
 
       {/* Chat content */}
       <View
-        style={[
-          {
-            marginLeft: Platform.OS === "web" ? width * 0.15 : 0,
-          },
-          styles.chatContent,
-        ]}
+        style={[{ marginLeft: isWeb ? width * 0.15 : 0 }, styles.chatContent]}
       >
         <FlatList
           data={messages}
