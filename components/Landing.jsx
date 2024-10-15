@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -12,17 +13,23 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import LogoAnimado from "./LogoAnimado";
+import { Feather } from "@expo/vector-icons";
 
 import { useRouter } from "expo-router";
 
 export default function Landing() {
   const { height, width } = useWindowDimensions();
   const [user, setUser] = useState(null);
+  const scrollViewRef = useRef(null);
+  const scrollIndicatorAnim = useRef(new Animated.Value(0)).current;
 
   const router = useRouter();
 
   useEffect(() => {
     checkUser();
+    if (Platform.OS !== "web") {
+      startScrollIndicatorAnimation();
+    }
   }, []);
 
   const checkUser = async () => {
@@ -43,6 +50,23 @@ export default function Landing() {
     } catch (error) {
       console.error("Error logging out:", error);
     }
+  };
+
+  const startScrollIndicatorAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scrollIndicatorAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scrollIndicatorAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   };
 
   const PlanCard = ({ title, price, features }) => (
@@ -125,7 +149,13 @@ export default function Landing() {
 
         <View style={styles.plansSection}>
           <Text style={styles.plansTitle}>Nuestros Planes</Text>
+          {Platform.OS !== "web" && (
+            <Text style={styles.scrollHint}>
+              Desliza horizontalmente para ver más
+            </Text>
+          )}
           <ScrollView
+            ref={scrollViewRef}
             horizontal={Platform.OS !== "web"}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={
@@ -133,6 +163,7 @@ export default function Landing() {
                 ? styles.webPlansContainer
                 : styles.mobilePlansContainer
             }
+            pagingEnabled={Platform.OS !== "web"}
           >
             <PlanCard
               title="Plan Base"
@@ -154,6 +185,25 @@ export default function Landing() {
               ]}
             />
           </ScrollView>
+          {Platform.OS !== "web" && (
+            <Animated.View
+              style={[
+                styles.scrollIndicator,
+                {
+                  transform: [
+                    {
+                      translateX: scrollIndicatorAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 20],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Feather name="chevron-right" size={24} color="white" />
+            </Animated.View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -167,7 +217,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(	68, 68, 68, 0.8)",
+    backgroundColor: "rgba(	68, 68, 68, 0.9)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
@@ -276,5 +326,22 @@ const styles = StyleSheet.create({
   planButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  scrollHint: {
+    color: "white",
+    textAlign: "center",
+    marginBottom: 10,
+    fontSize: 14,
+  },
+  mobilePlansContainer: {
+    paddingRight: 20,
+  },
+  scrollIndicator: {
+    position: "absolute",
+    right: 30,
+    bottom: 50,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 20,
+    padding: 5,
   },
 });
