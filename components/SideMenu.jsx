@@ -141,9 +141,17 @@ const SideMenu = ({
           <Pressable onPress={logout} style={styles.accountButton}>
             <Icon name="log-out" size={20} color="#CCC" />
           </Pressable>
-          <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
-            {user.email}
-          </Text>
+          {user ? (
+            <Text
+              style={styles.userEmail}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {user.email}
+            </Text>
+          ) : (
+            <Text style={styles.userEmail}>Cargando usuario...</Text>
+          )}
         </View>
       </Animated.View>
     </>
