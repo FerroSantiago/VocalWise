@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   accountContainer: {
-    flexDirection: Platform.OS === "web" ? "row" : "column",
+    flexDirection: "row",
     margin: 10,
   },
   registerButton: {
@@ -292,14 +292,6 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   planTitle: {
     fontSize: 24,

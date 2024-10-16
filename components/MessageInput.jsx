@@ -127,13 +127,20 @@ const MessageInput = ({ user, chatId }) => {
           <View style={styles.filePreview}>
             <Icon name="file" size={20} color="#DDD" />
             <Text style={styles.fileName}>{fileName}</Text>
-            <Pressable onPress={removeFile} style={styles.removeButton}>
+            <Pressable
+              onPress={removeFile}
+              style={({ pressed }) => [
+                styles.removeButton,
+                { opacity: pressed ? 0.5 : 1 },
+              ]}
+            >
               <Icon name="x" size={10} color="#FFF" />
             </Pressable>
           </View>
         )}
         <View style={styles.textInputContainer}>
           <TextInput
+            id="message-input"
             style={styles.input}
             placeholder="¿Listo para aprender?"
             placeholderTextColor="#CCC"

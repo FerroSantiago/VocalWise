@@ -52,7 +52,7 @@ const SideMenu = ({
         }),
       ]).start();
     }
-  }, [isMenuOpen, width]);
+  }, [isMenuOpen, width, isWeb, slideAnim, fadeAnim]);
 
   const logout = async () => {
     try {
@@ -91,9 +91,9 @@ const SideMenu = ({
           {
             opacity: fadeAnim,
             display: isWeb ? "none" : "flex",
+            pointerEvents: isMenuOpen ? "auto" : "none",
           },
         ]}
-        pointerEvents={isMenuOpen ? "auto" : "none"}
         onTouchStart={() => setIsMenuOpen(false)}
       />
 
@@ -110,13 +110,25 @@ const SideMenu = ({
         ]}
       >
         {!isWeb && (
-          <Pressable onPress={toggleMenu} style={styles.menuButton}>
+          <Pressable
+            onPress={toggleMenu}
+            style={({ pressed }) => [
+              styles.menuButton,
+              pressed && styles.pressedButton,
+            ]}
+          >
             <Icon name={isMenuOpen ? "x" : "menu"} size={30} color="#CCC" />
           </Pressable>
         )}
         <View style={styles.chatHistoryContent}>
           <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
-          <Pressable onPress={createNewChat} style={styles.newChatButton}>
+          <Pressable
+            onPress={createNewChat}
+            style={({ pressed }) => [
+              styles.newChatButton,
+              pressed && styles.pressedButton,
+            ]}
+          >
             <Icon name="plus" size={20} color="#CCC" />
             <Text style={styles.newChatButtonText}>Nuevo Chat</Text>
           </Pressable>
@@ -124,9 +136,10 @@ const SideMenu = ({
             {chats.map((chat) => (
               <Pressable
                 key={chat.id}
-                style={[
+                style={({ pressed }) => [
                   styles.historyItem,
                   selectedChatId === chat.id && styles.selectedHistoryItem,
+                  pressed && styles.pressedButton,
                 ]}
                 onPress={() => onSelectChat(chat.id)}
               >
@@ -138,7 +151,13 @@ const SideMenu = ({
           </ScrollView>
         </View>
         <View style={styles.userInfoContainer}>
-          <Pressable onPress={logout} style={styles.accountButton}>
+          <Pressable
+            onPress={logout}
+            style={({ pressed }) => [
+              styles.accountButton,
+              pressed && styles.pressedButton,
+            ]}
+          >
             <Icon name="log-out" size={20} color="#CCC" />
           </Pressable>
           {user ? (
@@ -163,8 +182,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: -70,
-    zIndex: 15,
     padding: 10,
+    zIndex: 15,
   },
   sidebarMenu: {
     position: "absolute",
@@ -232,6 +251,10 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     maxWidth: "100%",
+  },
+  pressedButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    transform: [{ scale: 0.97 }],
   },
 });
 
