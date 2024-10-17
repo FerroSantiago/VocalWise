@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   StyleSheet,
@@ -60,12 +61,14 @@ export default function Chat() {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
+  const [isLoading, setIsLoading] = useState(true);
 
   const isWeb = Platform.OS === "web";
 
   const router = useRouter();
 
   const handleSelectChat = useCallback((chatId) => {
+    setIsLoading(true);
     setSelectedChatId(chatId);
   }, []);
 
@@ -101,6 +104,7 @@ export default function Chat() {
 
   useEffect(() => {
     if (user) {
+      setIsLoading(true);
       const db = getFirestore();
       const chatsQuery = query(
         collection(db, "chats"),
@@ -119,6 +123,7 @@ export default function Chat() {
         if (fetchedChats.length > 0 && !selectedChatId) {
           setSelectedChatId(fetchedChats[0].id);
         }
+        setIsLoading(false);
       });
 
       return () => unsubscribeChats();
@@ -127,6 +132,7 @@ export default function Chat() {
 
   useEffect(() => {
     if (selectedChatId && user) {
+      setIsLoading(true);
       const db = getFirestore();
       const messagesQuery = query(
         collection(db, `chats/${selectedChatId}/messages`),
@@ -140,6 +146,7 @@ export default function Chat() {
           author: doc.data().userId === user.uid ? "user" : "other",
         }));
         setMessages(fetchedMessages);
+        setIsLoading(false);
       });
 
       return () => unsubscribeMessages();
@@ -169,31 +176,37 @@ export default function Chat() {
           <Logo />
         </View>
 
-        {/* User messages */}
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <BubbleMessage
-              author={item.author}
-              message={item.text}
-              fileName={item.fileName}
-              fileUrl={item.fileUrl}
-            />
-          )}
-          contentContainerStyle={{
-            gap: 15,
-            paddingLeft: 15,
-            paddingRight: Platform.OS === "web" ? "15%" : 5,
-            paddingBottom: 15,
-          }}
-          automaticallyAdjustKeyboardInsets
-          ListEmptyComponent={() => (
-            <Text style={{ color: "#999", textAlign: "center", padding: 20 }}>
-              No hay mensajes aún. ¡Comienza la conversación!
-            </Text>
-          )}
-        />
+        {isLoading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#FFF" />
+            <Text style={styles.loadingText}>Cargando mensajes...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <BubbleMessage
+                author={item.author}
+                message={item.text}
+                fileName={item.fileName}
+                fileUrl={item.fileUrl}
+              />
+            )}
+            contentContainerStyle={{
+              gap: 15,
+              paddingLeft: 15,
+              paddingRight: Platform.OS === "web" ? "15%" : 5,
+              paddingBottom: 15,
+            }}
+            automaticallyAdjustKeyboardInsets
+            ListEmptyComponent={() => (
+              <Text style={{ color: "#999", textAlign: "center", padding: 20 }}>
+                No hay mensajes aún. ¡Comienza la conversación!
+              </Text>
+            )}
+          />
+        )}
         {user && <MessageInput user={user} chatId={selectedChatId} />}
       </View>
     </View>
@@ -207,14 +220,21 @@ const styles = StyleSheet.create({
   },
   chatContent: {
     flex: 1,
-    justifyContent: "center",
     marginTop: 55,
     zIndex: Platform.OS === "web" ? 10 : 4,
   },
   logo: {
     position: "absolute",
-    //top: Platform.OS === "web" ? "25%" : "35%", // Ajusta la posición en mobile
-    justifyContent: "center",
     alignSelf: "center",
+    top: "25%",
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#FFF",
+    marginTop: 10,
   },
 });
