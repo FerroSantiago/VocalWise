@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FlatList,
-  ImageBackground,
   Platform,
   StyleSheet,
   Text,
@@ -22,14 +21,13 @@ import {
   where,
 } from "firebase/firestore";
 
-import logoBlanco from "../assets/logoBlanco.png";
-
+import Logo from "./Logo";
 import MessageInput from "./MessageInput";
 import SideMenu from "./SideMenu";
 
 import Icon from "react-native-vector-icons/Feather";
 
-function BubbleMessage({ author, message, fileName }) {
+const BubbleMessage = React.memo(({ author, message, fileName }) => {
   const isUserMessage = author === "user";
   return (
     <View
@@ -44,16 +42,16 @@ function BubbleMessage({ author, message, fileName }) {
           : "rgba(102,102,102,.4)",
       }}
     >
-      {fileName && (
+      {fileName ? (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <Icon name="file" size={15} color="#999" />
           <Text style={{ color: "#BBB", marginLeft: 5 }}>{fileName}</Text>
         </View>
-      )}
+      ) : null}
       <Text style={{ color: "#EEE" }}>{message}</Text>
     </View>
   );
-}
+});
 
 export default function Chat() {
   const { height, width } = useWindowDimensions();
@@ -66,6 +64,18 @@ export default function Chat() {
   const isWeb = Platform.OS === "web";
 
   const router = useRouter();
+
+  const handleSelectChat = useCallback((chatId) => {
+    setSelectedChatId(chatId);
+  }, []);
+
+  const handleSetIsMenuOpen = useCallback((isOpen) => {
+    setIsMenuOpen(isOpen);
+  }, []);
+
+  const handleSetMessages = useCallback((newMessages) => {
+    setMessages(newMessages);
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -86,9 +96,8 @@ export default function Chat() {
         }
       }
     };
-
     checkUser();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (user) {
@@ -114,10 +123,10 @@ export default function Chat() {
 
       return () => unsubscribeChats();
     }
-  }, [user]);
+  }, [user, selectedChatId]);
 
   useEffect(() => {
-    if (selectedChatId) {
+    if (selectedChatId && user) {
       const db = getFirestore();
       const messagesQuery = query(
         collection(db, `chats/${selectedChatId}/messages`),
@@ -139,39 +148,28 @@ export default function Chat() {
 
   return (
     <View style={styles.container}>
-      {/* VocalWise Logo */}
-      <ImageBackground
-        source={logoBlanco}
-        style={[
-          {
-            width: isWeb ? width * 0.4 : width * 0.85,
-            height: isWeb ? height * 0.4 : height * 0.85,
-            transform: [
-              {
-                translateX: isWeb ? -width * 0.185 : -width * 0.37,
-              },
-            ],
-          },
-          styles.logo,
-        ]}
-        resizeMode="contain"
-      />
       <SideMenu
         height={height}
         width={width}
         user={user}
         chats={chats}
         selectedChatId={selectedChatId}
-        onSelectChat={setSelectedChatId}
-        setMessages={setMessages}
+        onSelectChat={handleSelectChat}
+        setMessages={handleSetMessages}
         isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-      ></SideMenu>
+        setIsMenuOpen={handleSetIsMenuOpen}
+      />
 
       {/* Chat content */}
       <View
         style={[{ marginLeft: isWeb ? width * 0.15 : 0 }, styles.chatContent]}
       >
+        {/* VocalWise Logo */}
+        <View style={styles.logo}>
+          <Logo />
+        </View>
+
+        {/* User messages */}
         <FlatList
           data={messages}
           keyExtractor={(item) => item.id}
@@ -190,6 +188,11 @@ export default function Chat() {
             paddingBottom: 15,
           }}
           automaticallyAdjustKeyboardInsets
+          ListEmptyComponent={() => (
+            <Text style={{ color: "#999", textAlign: "center", padding: 20 }}>
+              No hay mensajes aún. ¡Comienza la conversación!
+            </Text>
+          )}
         />
         {user && <MessageInput user={user} chatId={selectedChatId} />}
       </View>
@@ -202,16 +205,16 @@ const styles = StyleSheet.create({
     height: "100%",
     width: "100%",
   },
+  chatContent: {
+    flex: 1,
+    justifyContent: "center",
+    marginTop: 55,
+    zIndex: Platform.OS === "web" ? 10 : 4,
+  },
   logo: {
     position: "absolute",
-    top: Platform.OS === "web" ? "25%" : "0",
-    left: Platform.OS === "web" ? "55%" : "45%",
-    opacity: 0.1,
-  },
-  chatContent: {
-    zIndex: Platform.OS === "web" ? 10 : 4,
-    flex: 1,
-    justifyContent: "flex-end",
-    marginTop: 55,
+    //top: Platform.OS === "web" ? "25%" : "35%", // Ajusta la posición en mobile
+    justifyContent: "center",
+    alignSelf: "center",
   },
 });

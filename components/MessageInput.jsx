@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Platform,
   Pressable,
@@ -64,7 +64,7 @@ const MessageInput = ({ user, chatId }) => {
     setFileObject(null);
   };
 
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!inputText.trim() && !fileObject) return;
 
     try {
@@ -118,7 +118,7 @@ const MessageInput = ({ user, chatId }) => {
     } finally {
       setIsSending(false);
     }
-  };
+  }, [inputText, fileObject, user, chatId, fileName]);
 
   return (
     <View style={styles.container}>

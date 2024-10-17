@@ -1,18 +1,16 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import {
   Animated,
   Platform,
   Pressable,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useRouter } from "expo-router";
-
 import {
   getFirestore,
   addDoc,
@@ -34,7 +32,6 @@ const SideMenu = ({
   const isWeb = Platform.OS === "web";
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
   const router = useRouter();
 
   useEffect(() => {
@@ -57,13 +54,13 @@ const SideMenu = ({
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("user");
-      router.push("/login"); // Redirigir al login
+      router.push("/login");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
   };
 
-  const createNewChat = async () => {
+  const createNewChat = useCallback(async () => {
     try {
       const db = getFirestore();
       const newChatRef = await addDoc(collection(db, "chats"), {
@@ -77,7 +74,7 @@ const SideMenu = ({
     } catch (error) {
       console.error("Error al crear un nuevo chat:", error);
     }
-  };
+  }, [user, onSelectChat, setMessages]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -96,8 +93,6 @@ const SideMenu = ({
         ]}
         onTouchStart={() => setIsMenuOpen(false)}
       />
-
-      {/* Sidebar Menu */}
       <Animated.View
         style={[
           styles.sidebarMenu,
@@ -132,23 +127,24 @@ const SideMenu = ({
             <Icon name="plus" size={20} color="#CCC" />
             <Text style={styles.newChatButtonText}>Nuevo Chat</Text>
           </Pressable>
-          <ScrollView>
-            {chats.map((chat) => (
+          <FlatList
+            data={chats}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
               <Pressable
-                key={chat.id}
                 style={({ pressed }) => [
                   styles.historyItem,
-                  selectedChatId === chat.id && styles.selectedHistoryItem,
+                  selectedChatId === item.id && styles.selectedHistoryItem,
                   pressed && styles.pressedButton,
                 ]}
-                onPress={() => onSelectChat(chat.id)}
+                onPress={() => onSelectChat(item.id)}
               >
                 <Text style={styles.historyItemText} numberOfLines={1}>
-                  {chat.lastMessage || "Nuevo chat"}
+                  {item.lastMessage || "Nuevo chat"}
                 </Text>
               </Pressable>
-            ))}
-          </ScrollView>
+            )}
+          />
         </View>
         <View style={styles.userInfoContainer}>
           <Pressable
@@ -251,6 +247,7 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     maxWidth: "100%",
+    ...(Platform.OS === "web" ? { userSelect: "text" } : {}),
   },
   pressedButton: {
     backgroundColor: "rgba(0, 0, 0, 0.25)",
@@ -258,4 +255,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SideMenu;
+export default React.memo(SideMenu);
