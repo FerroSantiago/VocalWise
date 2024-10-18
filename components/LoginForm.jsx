@@ -41,8 +41,10 @@ export default function LoginForm() {
 
       await AsyncStorage.setItem("user", JSON.stringify(userCredential.user));
 
-      setIsLoading(false);
-      router.push("/chat");
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/chat");
+      }, 1000);
     } catch (error) {
       console.log(error);
       setErrorMessage("Usuario o contraseña incorrecta.");
