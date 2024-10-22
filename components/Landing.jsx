@@ -95,12 +95,17 @@ export default function Landing() {
         <View style={styles.accountContainer}>
           {user ? (
             <>
-              <Text style={styles.welcomeText}>Hola, {user.email}!</Text>
               <Pressable
                 onPress={handleLogout}
+                style={[styles.navSectionButton, styles.registerButton]}
+              >
+                <Text style={styles.buttonText}>Cerrar sesión</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push("/chat")}
                 style={[styles.navSectionButton, styles.logButton]}
               >
-                <Text>Cerrar sesión</Text>
+                <Text>Ir al Chat</Text>
               </Pressable>
             </>
           ) : (

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Platform,
   Pressable,
@@ -12,11 +13,133 @@ import Icon from "react-native-vector-icons/Feather";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import {
-  getFirestore,
   addDoc,
   collection,
+  deleteDoc,
+  doc,
+  getFirestore,
   serverTimestamp,
 } from "firebase/firestore";
+
+const ChatItem = ({
+  item,
+  selectedChatId,
+  onSelectChat,
+  onDeleteChat,
+  isWeb,
+}) => {
+  const [showOptions, setShowOptions] = useState(false);
+  const [showDeleteIcon, setShowDeleteIcon] = useState(false);
+
+  const handleLongPress = () => {
+    if (!isWeb) {
+      setShowDeleteIcon(true);
+    }
+  };
+
+  const handleOptionsPress = (e) => {
+    e.stopPropagation();
+    setShowDeleteIcon(true);
+  };
+
+  const handleDeletePress = (e) => {
+    e.stopPropagation();
+    if (isWeb) {
+      // Para web, usamos window.confirm en lugar de Alert
+      const confirmDelete = window.confirm(
+        "¿Estás seguro que deseas eliminar este chat?"
+      );
+      if (confirmDelete) {
+        onDeleteChat(item.id);
+        setShowOptions(false);
+        setShowDeleteIcon(false);
+      }
+    } else {
+      // Para mobile, usamos Alert
+      Alert.alert(
+        "Confirmar eliminación",
+        "¿Estás seguro que deseas eliminar este chat?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+            onPress: () => {
+              setShowOptions(false);
+              setShowDeleteIcon(false);
+            },
+          },
+          {
+            text: "Eliminar",
+            style: "destructive",
+            onPress: () => {
+              onDeleteChat(item.id);
+              setShowOptions(false);
+              setShowDeleteIcon(false);
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleMainPress = () => {
+    if (!showDeleteIcon) {
+      onSelectChat(item.id);
+    }
+  };
+
+  return (
+    <View
+      style={[
+        styles.historyItemContainer,
+        selectedChatId === item.id && styles.selectedHistoryItem,
+      ]}
+      onMouseEnter={() => isWeb && setShowOptions(true)}
+      onMouseLeave={() => isWeb && !showDeleteIcon && setShowOptions(false)}
+    >
+      <Pressable
+        style={({ pressed }) => [
+          styles.historyItemContent,
+          pressed && styles.pressedButton,
+        ]}
+        onPress={handleMainPress}
+        onLongPress={handleLongPress}
+      >
+        <Text style={styles.historyItemText} numberOfLines={1}>
+          {item.lastMessage || "Nuevo chat"}
+        </Text>
+        <View style={styles.iconsContainer}>
+          <View style={styles.iconSlot}>
+            {isWeb && showOptions && !showDeleteIcon && (
+              <Pressable
+                onPress={handleOptionsPress}
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  pressed && styles.pressedIcon,
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="more-vertical" size={20} color="#CCC" />
+              </Pressable>
+            )}
+            {(showDeleteIcon || (!isWeb && showDeleteIcon)) && (
+              <Pressable
+                onPress={handleDeletePress}
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  pressed && styles.pressedIcon,
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Icon name="trash-2" size={20} color="#ff4444" />
+              </Pressable>
+            )}
+          </View>
+        </View>
+      </Pressable>
+    </View>
+  );
+};
 
 const SideMenu = ({
   height,
@@ -33,6 +156,7 @@ const SideMenu = ({
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const db = getFirestore();
 
   useEffect(() => {
     if (!isWeb) {
@@ -75,6 +199,21 @@ const SideMenu = ({
       console.error("Error al crear un nuevo chat:", error);
     }
   }, [user, onSelectChat, setMessages]);
+
+  const handleDeleteChat = async (chatId) => {
+    try {
+      // Primero eliminamos el documento del chat
+      await deleteDoc(doc(db, "chats", chatId));
+      if (chatId === selectedChatId) {
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error("Error al eliminar el chat:", error);
+      const errorMessage = isWeb
+        ? window.alert("No se pudo eliminar el chat")
+        : Alert.alert("Error", "No se pudo eliminar el chat");
+    }
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -131,18 +270,13 @@ const SideMenu = ({
             data={chats}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.historyItem,
-                  selectedChatId === item.id && styles.selectedHistoryItem,
-                  pressed && styles.pressedButton,
-                ]}
-                onPress={() => onSelectChat(item.id)}
-              >
-                <Text style={styles.historyItemText} numberOfLines={1}>
-                  {item.lastMessage || "Nuevo chat"}
-                </Text>
-              </Pressable>
+              <ChatItem
+                item={item}
+                selectedChatId={selectedChatId}
+                onSelectChat={onSelectChat}
+                onDeleteChat={handleDeleteChat}
+                isWeb={isWeb}
+              />
             )}
           />
         </View>
@@ -230,6 +364,8 @@ const styles = StyleSheet.create({
   },
   historyItemText: {
     color: "white",
+    flex: 1,
+    marginRight: 8,
   },
   userInfoContainer: {
     alignItems: "center",
@@ -248,6 +384,62 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: "100%",
     ...(Platform.OS === "web" ? { userSelect: "text" } : {}),
+  },
+  pressedButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    transform: [{ scale: 0.97 }],
+  },
+  historyItemContainer: {
+    marginBottom: 8,
+    borderRadius: 8,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  historyItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 8,
+    minHeight: 40,
+  },
+  iconsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: 30,
+    justifyContent: "flex-end",
+  },
+  iconSlot: {
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  optionsIcon: {
+    padding: 5,
+    marginLeft: 8,
+  },
+  iconButton: {
+    padding: 5,
+    borderRadius: 4,
+    backgroundColor: "transparent",
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteIcon: {
+    padding: 5,
+    marginLeft: 8,
+  },
+  historyItemText: {
+    color: "white",
+    flex: 1,
+    marginRight: 8,
+  },
+  selectedHistoryItem: {
+    backgroundColor: "#666",
   },
   pressedButton: {
     backgroundColor: "rgba(0, 0, 0, 0.25)",
