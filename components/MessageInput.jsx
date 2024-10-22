@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Platform,
   Pressable,
@@ -114,6 +114,7 @@ const MessageInput = ({ user, chatId }) => {
       setInputText("");
       setFileName("");
       setFileObject(null);
+      setInputHeight(24);
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
     } finally {
@@ -122,25 +123,50 @@ const MessageInput = ({ user, chatId }) => {
   }, [inputText, fileObject, user, chatId, fileName]);
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
+    if (Platform.OS === "web" && e.key === "Enter") {
       if (e.shiftKey) {
-        return; // Permite que el evento continúe y cree un nueva línea
+        // Permitir nueva línea solo si no excede el máximo de 5 líneas
+        const lines = inputText.split("\n");
+        if (lines.length < 5) {
+          return; // Permite el salto de línea
+        } else {
+          e.preventDefault(); // Previene más saltos de línea
+        }
       } else {
-        e.preventDefault(); // Previene el salto de línea
-        sendMessage(); // Envía el mensaje
+        e.preventDefault();
+        sendMessage();
       }
+    }
+  };
+
+  const handleTextChange = (text) => {
+    setInputText(text);
+    // Si el texto está vacío, resetear la altura
+    if (!text) {
+      setInputHeight(24);
     }
   };
 
   const handleContentSizeChange = (event) => {
     const { contentSize } = event.nativeEvent;
-    const newHeight = Math.min(Math.max(24, contentSize.height), 24 * 5);
-    setInputHeight(newHeight);
+    // Solo ajustar la altura si hay texto
+    if (inputText) {
+      const newHeight = Math.min(Math.max(24, contentSize.height), 24 * 5);
+      setInputHeight(newHeight);
+    } else {
+      setInputHeight(24);
+    }
   };
+
+  useEffect(() => {
+    if (!inputText) {
+      setInputHeight(24);
+    }
+  }, [inputText]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
         {fileObject && (
           <View style={styles.filePreview}>
             <Icon name="file" size={20} color="#DDD" />
@@ -159,15 +185,22 @@ const MessageInput = ({ user, chatId }) => {
         <View style={styles.textInputContainer}>
           <TextInput
             id="message-input"
-            style={[styles.input, { height: inputHeight }]}
+            style={[
+              styles.input,
+              {
+                height: inputHeight,
+                maxHeight: 24 * 5,
+              },
+            ]}
             placeholder="¿Listo para aprender?"
             placeholderTextColor="#CCC"
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleTextChange}
             onKeyPress={handleKeyPress}
             multiline={true}
             onContentSizeChange={handleContentSizeChange}
             textAlignVertical="center"
+            maxLength={1000}
           />
           <View style={styles.buttonContainer}>
             <Pressable
