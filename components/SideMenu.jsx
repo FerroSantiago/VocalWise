@@ -255,7 +255,7 @@ const SideMenu = ({
           </Pressable>
         )}
         <View style={styles.chatHistoryContent}>
-          <Text style={styles.chatHistoryTitle}>Chats Anteriores</Text>
+          <Text style={styles.chatHistoryTitle}>Chats anteriores</Text>
           <Pressable
             onPress={createNewChat}
             style={({ pressed }) => [
@@ -264,7 +264,7 @@ const SideMenu = ({
             ]}
           >
             <Icon name="plus" size={20} color="#CCC" />
-            <Text style={styles.newChatButtonText}>Nuevo Chat</Text>
+            <Text style={styles.newChatButtonText}>Nuevo chat</Text>
           </Pressable>
           <FlatList
             data={chats}

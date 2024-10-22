@@ -24,6 +24,7 @@ const MessageInput = ({ user, chatId }) => {
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const [inputHeight, setInputHeight] = useState(24);
 
   const uploadFile = async () => {
     try {
@@ -120,6 +121,23 @@ const MessageInput = ({ user, chatId }) => {
     }
   }, [inputText, fileObject, user, chatId, fileName]);
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        return; // Permite que el evento continúe y cree un nueva línea
+      } else {
+        e.preventDefault(); // Previene el salto de línea
+        sendMessage(); // Envía el mensaje
+      }
+    }
+  };
+
+  const handleContentSizeChange = (event) => {
+    const { contentSize } = event.nativeEvent;
+    const newHeight = Math.min(Math.max(24, contentSize.height), 24 * 5);
+    setInputHeight(newHeight);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
@@ -141,11 +159,15 @@ const MessageInput = ({ user, chatId }) => {
         <View style={styles.textInputContainer}>
           <TextInput
             id="message-input"
-            style={styles.input}
+            style={[styles.input, { height: inputHeight }]}
             placeholder="¿Listo para aprender?"
             placeholderTextColor="#CCC"
             value={inputText}
             onChangeText={setInputText}
+            onKeyPress={handleKeyPress}
+            multiline={true}
+            onContentSizeChange={handleContentSizeChange}
+            textAlignVertical="center"
           />
           <View style={styles.buttonContainer}>
             <Pressable
@@ -221,9 +243,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginLeft: 10,
     outlineStyle: "none",
+    fontSize: 16,
+    lineHeight: 24,
   },
   buttonContainer: {
     flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 8,
   },
   button: {
     padding: 10,
