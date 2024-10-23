@@ -30,6 +30,40 @@ const ChatItem = ({
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showDeleteIcon, setShowDeleteIcon] = useState(false);
+  const itemRef = useRef(null);
+
+  useEffect(() => {
+    if (isWeb) {
+      const handleClickOutside = (event) => {
+        // Verificamos si el clic fue fuera del componente actual
+        if (itemRef.current && !itemRef.current.contains(event.target)) {
+          setShowDeleteIcon(false);
+          setShowOptions(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isWeb]);
+
+  const handleItemClick = (e) => {
+    e.stopPropagation();
+  };
+
+  useEffect(() => {
+    if (isWeb && itemRef.current) {
+      itemRef.current.addEventListener("mousedown", handleItemClick);
+      return () => {
+        if (itemRef.current) {
+          itemRef.current.removeEventListener("mousedown", handleItemClick);
+        }
+      };
+    }
+  }, [isWeb]);
 
   const handleLongPress = () => {
     if (!isWeb) {
@@ -45,17 +79,13 @@ const ChatItem = ({
   const handleDeletePress = (e) => {
     e.stopPropagation();
     if (isWeb) {
-      // Para web, usamos window.confirm en lugar de Alert
       const confirmDelete = window.confirm(
         "¿Estás seguro que deseas eliminar este chat?"
       );
       if (confirmDelete) {
         onDeleteChat(item.id);
-        setShowOptions(false);
-        setShowDeleteIcon(false);
       }
     } else {
-      // Para mobile, usamos Alert
       Alert.alert(
         "Confirmar eliminación",
         "¿Estás seguro que deseas eliminar este chat?",
@@ -63,39 +93,36 @@ const ChatItem = ({
           {
             text: "Cancelar",
             style: "cancel",
-            onPress: () => {
-              setShowOptions(false);
-              setShowDeleteIcon(false);
-            },
           },
           {
             text: "Eliminar",
             style: "destructive",
             onPress: () => {
               onDeleteChat(item.id);
-              setShowOptions(false);
-              setShowDeleteIcon(false);
             },
           },
         ]
       );
     }
+    setShowOptions(false);
+    setShowDeleteIcon(false);
   };
 
   const handleMainPress = () => {
-    if (!showDeleteIcon) {
-      onSelectChat(item.id);
-    }
+    onSelectChat(item.id);
+    setShowDeleteIcon(false);
+    setShowOptions(false);
   };
 
   return (
     <View
+      ref={itemRef}
       style={[
         styles.historyItemContainer,
         selectedChatId === item.id && styles.selectedHistoryItem,
       ]}
       onMouseEnter={() => isWeb && setShowOptions(true)}
-      onMouseLeave={() => isWeb && !showDeleteIcon && setShowOptions(false)}
+      onMouseLeave={() => isWeb && setShowOptions(false)}
     >
       <Pressable
         style={({ pressed }) => [
@@ -122,7 +149,7 @@ const ChatItem = ({
                 <Icon name="more-vertical" size={20} color="#CCC" />
               </Pressable>
             )}
-            {(showDeleteIcon || (!isWeb && showDeleteIcon)) && (
+            {showDeleteIcon && (
               <Pressable
                 onPress={handleDeletePress}
                 style={({ pressed }) => [
@@ -400,7 +427,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 8,
+    padding: 5,
     minHeight: 40,
   },
   iconsContainer: {
@@ -414,10 +441,6 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: "center",
     alignItems: "center",
-  },
-  optionsIcon: {
-    padding: 5,
-    marginLeft: 8,
   },
   iconButton: {
     padding: 5,
