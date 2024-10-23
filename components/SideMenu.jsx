@@ -17,6 +17,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   getFirestore,
   serverTimestamp,
 } from "firebase/firestore";
@@ -229,16 +230,33 @@ const SideMenu = ({
 
   const handleDeleteChat = async (chatId) => {
     try {
-      // Primero eliminamos el documento del chat
+      // Se obtienen los msj del chat
+      const messagesRef = collection(db, `chats/${chatId}/messages`);
+      const messagesSnapshot = await getDocs(messagesRef);
+
+      // Se eliminan los msj de la subcoleccion
+      const deletePromises = messagesSnapshot.docs.map((doc) =>
+        deleteDoc(doc.ref)
+      );
+      await Promise.all(deletePromises);
+
+      // Se elimina el chat
       await deleteDoc(doc(db, "chats", chatId));
+
+      // Si el chat eliminado era el seleccionado, limpiamos los mensajes
       if (chatId === selectedChatId) {
         setMessages([]);
+        // Opcional: seleccionar otro chat si existe
+        const remainingChats = chats.filter((chat) => chat.id !== chatId);
+        if (remainingChats.length > 0) {
+          onSelectChat(remainingChats[0].id);
+        }
       }
     } catch (error) {
       console.error("Error al eliminar el chat:", error);
       const errorMessage = isWeb
-        ? window.alert("No se pudo eliminar el chat")
-        : Alert.alert("Error", "No se pudo eliminar el chat");
+        ? window.alert("No se pudo eliminar el chat y sus mensajes")
+        : Alert.alert("Error", "No se pudo eliminar el chat y sus mensajes");
     }
   };
 
