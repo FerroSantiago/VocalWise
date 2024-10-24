@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -53,10 +53,15 @@ export default function LoginForm() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} role="form">
       <View style={styles.formContainer}>
         <View style={styles.logoContainer}>
-          <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={logoBlanco}
+            style={styles.logo}
+            resizeMode="contain"
+            aria-label="Logo de la aplicación"
+          />
         </View>
         <View style={styles.inputContainer}>
           <TextInput
@@ -65,6 +70,11 @@ export default function LoginForm() {
             onChangeText={(text) => setEmail(text)}
             placeholder="Email"
             placeholderTextColor="#9CA3AF"
+            aria-label="Campo de email"
+            textContentType="emailAddress"
+            autoComplete="email"
+            autoCapitalize="none"
+            inputMode="email-address"
           />
         </View>
         <View style={styles.passwordContainer}>
@@ -75,17 +85,25 @@ export default function LoginForm() {
             placeholder="Contraseña"
             placeholderTextColor="#9CA3AF"
             secureTextEntry={!showPassword}
+            aria-label="Campo de contraseña"
+            textContentType="password"
+            autoComplete="password"
+            autoCapitalize="none"
           />
-          <TouchableOpacity
+          <Pressable
             onPress={() => setShowPassword(!showPassword)}
             style={styles.eyeIcon}
+            aria-label={
+              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+            role="button"
           >
             <Feather
               name={showPassword ? "eye" : "eye-off"}
               size={24}
               color="#999"
             />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {errorMessage ? (
@@ -93,40 +111,62 @@ export default function LoginForm() {
         ) : null}
 
         <View style={styles.rememberMeContainer}>
-          <TouchableOpacity
+          <Pressable
             style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
             onPress={() => setRememberMe(!rememberMe)}
+            role="checkbox"
+            aria-label="Recordar credenciales"
+            aria-checked={rememberMe}
           />
           <Text style={styles.rememberMeText}>Recordarme</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.button, isLoading && styles.disabledButton]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            isLoading && styles.disabledButton,
+            pressed && styles.buttonPressed,
+          ]}
           onPress={login}
           disabled={isLoading}
+          role="button"
+          aria-label="Iniciar sesion"
+          aria-checked={isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
             <Text style={styles.buttonText}>Login</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
         <View style={styles.links}>
-          <TouchableOpacity onPress={() => router.push("/register")}>
+          <Pressable
+            onPress={() => router.push("/register")}
+            role="link"
+            aria-label="Ir a registro"
+          >
             <Text style={styles.linkText}>Registrarme</Text>
-          </TouchableOpacity>
-          <TouchableOpacity>
+          </Pressable>
+          <Pressable role="link" aria-label="Recuperar contraseña">
             <Text style={styles.linkText}>Olvidé mi contraseña</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
         <View style={styles.separator} />
-        <TouchableOpacity style={styles.socialButton}>
+        <Pressable
+          style={styles.socialButton}
+          role="button"
+          aria-label="Iniciar sesión con Google"
+        >
           <Feather name="mail" size={24} color="#fff" />
           <Text style={styles.socialButtonText}>Iniciar sesión con Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.socialButton, styles.metaButton]}>
+        </Pressable>
+        <Pressable
+          style={[styles.socialButton, styles.metaButton]}
+          role="button"
+          aria-label="Iniciar sesión con Meta"
+        >
           <Feather name="facebook" size={24} color="#fff" />
           <Text style={styles.socialButtonText}>Iniciar sesión con Meta</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -209,6 +249,7 @@ const styles = StyleSheet.create({
   },
   rememberMeText: {
     color: "#fff",
+    userSelect: "none",
   },
   button: {
     backgroundColor: "#4B5563",
@@ -222,6 +263,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+    userSelect: "none",
   },
   disabledButton: {
     opacity: 0.7,
@@ -232,7 +274,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   linkText: {
-    color: "#3498db",
+    color: "#94b1f3",
+    userSelect: "none",
   },
   separator: {
     width: "100%",
@@ -260,10 +303,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 10,
+    userSelect: "none",
   },
   errorText: {
-    color: "red", // Color para el mensaje de error
+    color: "red",
     textAlign: "center",
     marginBottom: 16,
+    userSelect: "none",
   },
 });
