@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -68,6 +69,7 @@ const MessageInput = ({ user, chatId }) => {
 
   const sendMessage = useCallback(async () => {
     if (!inputText.trim() && !fileObject) return;
+    if (isSending) return;
 
     try {
       setIsSending(true);
@@ -90,6 +92,12 @@ const MessageInput = ({ user, chatId }) => {
         fileName: fileName,
       };
 
+      const messageText = inputText.trim();
+      setInputText("");
+      setFileName("");
+      setFileObject(null);
+      setInputHeight(24);
+
       if (!chatId) {
         const newChatRef = await addDoc(collection(db, "chats"), {
           userId: user.uid,
@@ -99,23 +107,19 @@ const MessageInput = ({ user, chatId }) => {
         });
         chatId = newChatRef.id;
       }
+
       // Actualizar el último mensaje del chat existente
-      await setDoc(
-        doc(db, "chats", chatId),
-        {
-          lastMessage: inputText.trim(),
-          lastMessageTime: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      // Añadir el mensaje a la subcolección de mensajes del chat
-      await addDoc(collection(db, `chats/${chatId}/messages`), messageData);
-
-      setInputText("");
-      setFileName("");
-      setFileObject(null);
-      setInputHeight(24);
+      await Promise.all([
+        setDoc(
+          doc(db, "chats", chatId),
+          {
+            lastMessage: messageText,
+            lastMessageTime: serverTimestamp(),
+          },
+          { merge: true }
+        ),
+        addDoc(collection(db, `chats/${chatId}/messages`), messageData),
+      ]);
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
     } finally {
@@ -127,7 +131,9 @@ const MessageInput = ({ user, chatId }) => {
     if (Platform.OS === "web" && e.key === "Enter") {
       if (!e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        if (!isSending) {
+          sendMessage();
+        }
       }
     }
   };
@@ -166,6 +172,12 @@ const MessageInput = ({ user, chatId }) => {
       keyboardVerticalOffset={Platform.OS !== "web" ? 90 : 0}
       style={styles.keyboardAvoidingView}
     >
+      {isSending && (
+        <View style={styles.sendingIndicator}>
+          <ActivityIndicator size="small" color="#999" />
+          <Text style={styles.sendingText}>Enviando mensaje...</Text>
+        </View>
+      )}
       <View style={styles.container}>
         <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
           {fileObject && (
@@ -295,6 +307,24 @@ const styles = StyleSheet.create({
   button: {
     padding: 10,
     marginRight: 5,
+  },
+  sendingIndicator: {
+    position: "absolute",
+    top: -30,
+    left: Platform.OS === "web" ? "15%" : "2.5%",
+    right: Platform.OS === "web" ? "15%" : "2.5%",
+    backgroundColor: "#333",
+    padding: 8,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  sendingText: {
+    color: "#999",
+    marginLeft: 8,
+    fontSize: 14,
   },
 });
 

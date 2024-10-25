@@ -63,6 +63,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const isWeb = Platform.OS === "web";
 
@@ -93,28 +94,46 @@ export default function Chat() {
 
   useEffect(() => {
     const checkUser = async () => {
-      // Verifica si hay un usuario autenticado en AsyncStorage
-      const storedUser = await AsyncStorage.getItem("user");
-
-      if (storedUser) {
-        setUser(JSON.parse(storedUser)); // Si hay usuario, lo guardamos en el estado
-      } else {
-        // Verifica con Firebase si el usuario está autenticado
+      try {
         const auth = getAuth();
-        const currentUser = auth.currentUser;
+        // Primero intentamos obtener del AsyncStorage
+        const storedUser = await AsyncStorage.getItem("user");
 
-        if (currentUser) {
-          setUser(currentUser); // Si el usuario está autenticado, lo guardamos en el estado
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+
+          // Verificamos si el token está vigente
+          if (auth.currentUser) {
+            const token = await auth.currentUser.getIdToken(true);
+            // Si llegamos aquí, el token es válido
+            setIsAuthReady(true);
+          } else {
+            // Si no hay usuario en Firebase, redirigimos al login
+            router.push("/login");
+          }
         } else {
-          router.push("/login"); // Si no hay usuario, redirige a la pantalla de login
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            // Esperamos explícitamente a que el token esté disponible
+            await currentUser.getIdToken(true);
+            setUser(currentUser);
+            setIsAuthReady(true);
+          } else {
+            router.push("/login");
+          }
         }
+      } catch (error) {
+        console.error("Error during auth check:", error);
+        router.push("/login");
       }
     };
+
     checkUser();
   }, [router]);
 
   useEffect(() => {
-    if (user) {
+    if (user && isAuthReady) {
       setIsLoading(true);
       const db = getFirestore();
       const chatsQuery = query(
@@ -123,23 +142,40 @@ export default function Chat() {
         orderBy("lastMessageTime", "desc")
       );
 
-      const unsubscribeChats = onSnapshot(chatsQuery, (querySnapshot) => {
-        const fetchedChats = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setChats(fetchedChats);
+      const unsubscribeChats = onSnapshot(
+        chatsQuery,
+        (querySnapshot) => {
+          const fetchedChats = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setChats(fetchedChats);
 
-        // Seleccionar el primer chat por defecto si no hay ninguno seleccionado
-        if (fetchedChats.length > 0 && !selectedChatId) {
-          setSelectedChatId(fetchedChats[0].id);
+          // Seleccionar el primer chat por defecto si no hay ninguno seleccionado
+          if (fetchedChats.length > 0 && !selectedChatId) {
+            setSelectedChatId(fetchedChats[0].id);
+          }
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching chats:", error);
+          // Si hay error de permisos, intentamos refreshear el token
+          if (error.code === "permission-denied") {
+            const auth = getAuth();
+            if (auth.currentUser) {
+              auth.currentUser
+                .getIdToken(true)
+                .then(() => setIsAuthReady(true))
+                .catch((err) => console.error("Error refreshing token:", err));
+            }
+          }
+          setIsLoading(false);
         }
-        setIsLoading(false);
-      });
+      );
 
       return () => unsubscribeChats();
     }
-  }, [user, selectedChatId]);
+  }, [user, selectedChatId, isAuthReady]);
 
   useEffect(() => {
     if (selectedChatId && user) {
