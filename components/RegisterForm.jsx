@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import logoBlanco from "../assets/logoBlanco.png";
+import logoBlanco from "../assets/logoBlanco.webp";
 import appFirebase from "../credenciales";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    height: 70,
+    height: 53,
     width: 70,
   },
   inputsContainer: {
