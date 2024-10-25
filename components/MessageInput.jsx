@@ -200,7 +200,7 @@ const MessageInput = ({ user, chatId }) => {
               onKeyPress={handleKeyPress}
               multiline={true}
               onContentSizeChange={handleContentSizeChange}
-              textAlignVertical="center"
+              verticalAlign="middle"
               maxLength={1000}
             />
             <View style={styles.buttonContainer}>
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     outlineStyle: "none",
     fontSize: 16,
     lineHeight: 24,
-    textAlignVertical: "center",
+    verticalAlign: "middle",
     minHeight: 24,
   },
   buttonContainer: {

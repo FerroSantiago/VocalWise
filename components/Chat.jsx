@@ -68,10 +68,15 @@ export default function Chat() {
 
   const router = useRouter();
 
-  const handleSelectChat = useCallback((chatId) => {
-    setIsLoading(true);
-    setSelectedChatId(chatId);
-  }, []);
+  const handleSelectChat = useCallback(
+    (chatId) => {
+      if (chatId !== selectedChatId) {
+        setIsLoading(true);
+        setSelectedChatId(chatId);
+      }
+    },
+    [selectedChatId]
+  );
 
   const handleSetIsMenuOpen = useCallback((isOpen) => {
     if (Platform.OS !== "web") {
