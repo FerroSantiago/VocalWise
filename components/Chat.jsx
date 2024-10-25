@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
   Platform,
   StyleSheet,
   Text,
@@ -73,6 +74,11 @@ export default function Chat() {
   }, []);
 
   const handleSetIsMenuOpen = useCallback((isOpen) => {
+    if (Platform.OS !== "web") {
+      if (isOpen) {
+        Keyboard.dismiss();
+      }
+    }
     setIsMenuOpen(isOpen);
   }, []);
 
@@ -197,7 +203,7 @@ export default function Chat() {
               gap: 15,
               paddingLeft: 15,
               paddingRight: Platform.OS === "web" ? "15%" : 5,
-              paddingBottom: Platform.OS === "ios" ? 70 : 5,
+              paddingBottom: Platform.OS !== "web" ? 70 : 5,
             }}
             automaticallyAdjustKeyboardInsets={true}
             keyboardShouldPersistTaps="handled"

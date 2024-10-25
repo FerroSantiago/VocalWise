@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -162,8 +162,8 @@ const MessageInput = ({ user, chatId }) => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      behavior={Platform.OS !== "web" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS !== "web" ? 90 : 0}
       style={styles.keyboardAvoidingView}
     >
       <View style={styles.container}>
@@ -234,12 +234,12 @@ const MessageInput = ({ user, chatId }) => {
 const styles = StyleSheet.create({
   keyboardAvoidingView: {
     width: "100%",
-    position: Platform.OS === "ios" ? "absolute" : "relative",
+    position: Platform.OS !== "web" ? "absolute" : "relative",
     bottom: 0,
   },
   container: {
     alignItems: "center",
-    paddingBottom: Platform.OS === "ios" ? 10 : 0,
+    paddingBottom: Platform.OS !== "wbe" ? 10 : 0,
   },
   inputContainer: {
     padding: 5,

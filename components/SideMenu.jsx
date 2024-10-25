@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Keyboard,
   Platform,
   Pressable,
   FlatList,
@@ -261,6 +262,9 @@ const SideMenu = ({
   };
 
   const toggleMenu = () => {
+    if (Platform.OS !== "web") {
+      Keyboard.dismiss();
+    }
     setIsMenuOpen(!isMenuOpen);
   };
 
