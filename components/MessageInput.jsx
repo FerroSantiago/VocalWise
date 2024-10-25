@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -124,15 +125,7 @@ const MessageInput = ({ user, chatId }) => {
 
   const handleKeyPress = (e) => {
     if (Platform.OS === "web" && e.key === "Enter") {
-      if (e.shiftKey) {
-        // Permitir nueva línea solo si no excede el máximo de 5 líneas
-        const lines = inputText.split("\n");
-        if (lines.length < 5) {
-          return; // Permite el salto de línea
-        } else {
-          e.preventDefault(); // Previene más saltos de línea
-        }
-      } else {
+      if (!e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
@@ -149,10 +142,13 @@ const MessageInput = ({ user, chatId }) => {
 
   const handleContentSizeChange = (event) => {
     const { contentSize } = event.nativeEvent;
-    // Solo ajustar la altura si hay texto
+    // Solo ajustar la altura si hay texto y no excede el máximo
     if (inputText) {
-      const newHeight = Math.min(Math.max(24, contentSize.height), 24 * 5);
-      setInputHeight(newHeight);
+      const maxHeight = 24 * 5;
+      // No permitimos que la altura crezca más allá del máximo
+      if (contentSize.height <= maxHeight) {
+        setInputHeight(Math.max(24, contentSize.height));
+      }
     } else {
       setInputHeight(24);
     }
@@ -165,73 +161,85 @@ const MessageInput = ({ user, chatId }) => {
   }, [inputText]);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
-        {fileObject && (
-          <View style={styles.filePreview}>
-            <Icon name="file" size={20} color="#DDD" />
-            <Text style={styles.fileName}>{fileName}</Text>
-            <Pressable
-              onPress={removeFile}
-              style={({ pressed }) => [
-                styles.removeButton,
-                { opacity: pressed ? 0.5 : 1 },
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      style={styles.keyboardAvoidingView}
+    >
+      <View style={styles.container}>
+        <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
+          {fileObject && (
+            <View style={styles.filePreview}>
+              <Icon name="file" size={20} color="#DDD" />
+              <Text style={styles.fileName}>{fileName}</Text>
+              <Pressable
+                onPress={removeFile}
+                style={({ pressed }) => [
+                  styles.removeButton,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Icon name="x" size={10} color="#FFF" />
+              </Pressable>
+            </View>
+          )}
+          <View style={styles.textInputContainer}>
+            <TextInput
+              id="message-input"
+              style={[
+                styles.input,
+                {
+                  height: inputHeight,
+                  maxHeight: 24 * 5,
+                },
               ]}
-            >
-              <Icon name="x" size={10} color="#FFF" />
-            </Pressable>
-          </View>
-        )}
-        <View style={styles.textInputContainer}>
-          <TextInput
-            id="message-input"
-            style={[
-              styles.input,
-              {
-                height: inputHeight,
-                maxHeight: 24 * 5,
-              },
-            ]}
-            placeholder="¿Listo para aprender?"
-            placeholderTextColor="#CCC"
-            value={inputText}
-            onChangeText={handleTextChange}
-            onKeyPress={handleKeyPress}
-            multiline={true}
-            onContentSizeChange={handleContentSizeChange}
-            textAlignVertical="center"
-            maxLength={1000}
-          />
-          <View style={styles.buttonContainer}>
-            <Pressable
-              onPress={uploadFile}
-              style={({ pressed }) => [
-                styles.button,
-                { opacity: pressed ? 0.5 : 1 },
-              ]}
-            >
-              <Icon name="paperclip" size={20} color="#999" />
-            </Pressable>
-            <Pressable
-              onPress={sendMessage}
-              disabled={isSending}
-              style={({ pressed }) => [
-                styles.button,
-                { opacity: pressed ? 0.5 : 1 },
-              ]}
-            >
-              <Icon name="send" size={20} color="#999" />
-            </Pressable>
+              placeholder="¿Listo para aprender?"
+              placeholderTextColor="#CCC"
+              value={inputText}
+              onChangeText={handleTextChange}
+              onKeyPress={handleKeyPress}
+              multiline={true}
+              onContentSizeChange={handleContentSizeChange}
+              textAlignVertical="center"
+              maxLength={1000}
+            />
+            <View style={styles.buttonContainer}>
+              <Pressable
+                onPress={uploadFile}
+                style={({ pressed }) => [
+                  styles.button,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Icon name="paperclip" size={20} color="#999" />
+              </Pressable>
+              <Pressable
+                onPress={sendMessage}
+                disabled={isSending}
+                style={({ pressed }) => [
+                  styles.button,
+                  { opacity: pressed ? 0.5 : 1 },
+                ]}
+              >
+                <Icon name="send" size={20} color="#999" />
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    width: "100%",
+    position: Platform.OS === "ios" ? "absolute" : "relative",
+    bottom: 0,
+  },
   container: {
     alignItems: "center",
+    paddingBottom: Platform.OS === "ios" ? 10 : 0,
   },
   inputContainer: {
     padding: 5,
@@ -273,16 +281,16 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: "#CCC",
-    paddingHorizontal: 15,
-    marginLeft: 10,
+    paddingHorizontal: 10,
     outlineStyle: "none",
     fontSize: 16,
     lineHeight: 24,
+    textAlignVertical: "center",
+    minHeight: 24,
   },
   buttonContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingBottom: 8,
   },
   button: {
     padding: 10,

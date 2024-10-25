@@ -197,9 +197,10 @@ export default function Chat() {
               gap: 15,
               paddingLeft: 15,
               paddingRight: Platform.OS === "web" ? "15%" : 5,
-              paddingBottom: 15,
+              paddingBottom: Platform.OS === "ios" ? 70 : 5,
             }}
-            automaticallyAdjustKeyboardInsets
+            automaticallyAdjustKeyboardInsets={true}
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={() => (
               <Text style={{ color: "#999", textAlign: "center", padding: 20 }}>
                 No hay mensajes aún. ¡Comienza la conversación!
