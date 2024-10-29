@@ -10,9 +10,7 @@ import {
   View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useRouter } from "expo-router";
-
 import { getAuth } from "firebase/auth";
 import {
   getFirestore,
@@ -23,37 +21,11 @@ import {
   where,
 } from "firebase/firestore";
 
+// Componentes
 import Logo from "./Logo";
 import MessageInput from "./MessageInput";
 import SideMenu from "./SideMenu";
-
-import Icon from "react-native-vector-icons/Feather";
-
-const BubbleMessage = React.memo(({ author, message, fileName }) => {
-  const isUserMessage = author === "user";
-  return (
-    <View
-      style={{
-        margin: 8,
-        maxWidth: "80%",
-        borderRadius: 15,
-        padding: 10,
-        alignSelf: isUserMessage ? "flex-end" : "flex-start",
-        backgroundColor: isUserMessage
-          ? "rgba(51,51,51,.4)"
-          : "rgba(102,102,102,.4)",
-      }}
-    >
-      {fileName ? (
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Icon name="file" size={15} color="#999" />
-          <Text style={{ color: "#BBB", marginLeft: 5 }}>{fileName}</Text>
-        </View>
-      ) : null}
-      <Text style={{ color: "#EEE" }}>{message}</Text>
-    </View>
-  );
-});
+import BubbleMessage from "./BubbleMessage"; // Importamos el nuevo componente separado
 
 export default function Chat() {
   const { height, width } = useWindowDimensions();
@@ -66,7 +38,6 @@ export default function Chat() {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   const isWeb = Platform.OS === "web";
-
   const router = useRouter();
 
   const handleSelectChat = useCallback(
@@ -92,30 +63,26 @@ export default function Chat() {
     setMessages(newMessages);
   }, []);
 
+  // Efecto para verificar la autenticación del usuario
   useEffect(() => {
     const checkUser = async () => {
       try {
         const auth = getAuth();
-        // Primero intentamos obtener del AsyncStorage
         const storedUser = await AsyncStorage.getItem("user");
 
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
 
-          // Verificamos si el token está vigente
           if (auth.currentUser) {
             const token = await auth.currentUser.getIdToken(true);
-            // Si llegamos aquí, el token es válido
             setIsAuthReady(true);
           } else {
-            // Si no hay usuario en Firebase, redirigimos al login
             router.push("/login");
           }
         } else {
           const currentUser = auth.currentUser;
           if (currentUser) {
-            // Esperamos explícitamente a que el token esté disponible
             await currentUser.getIdToken(true);
             setUser(currentUser);
             setIsAuthReady(true);
@@ -132,6 +99,7 @@ export default function Chat() {
     checkUser();
   }, [router]);
 
+  // Efecto para cargar los chats
   useEffect(() => {
     if (user && isAuthReady) {
       setIsLoading(true);
@@ -151,7 +119,6 @@ export default function Chat() {
           }));
           setChats(fetchedChats);
 
-          // Seleccionar el primer chat por defecto si no hay ninguno seleccionado
           if (fetchedChats.length > 0 && !selectedChatId) {
             setSelectedChatId(fetchedChats[0].id);
           }
@@ -159,7 +126,6 @@ export default function Chat() {
         },
         (error) => {
           console.error("Error fetching chats:", error);
-          // Si hay error de permisos, intentamos refreshear el token
           if (error.code === "permission-denied") {
             const auth = getAuth();
             if (auth.currentUser) {
@@ -177,28 +143,44 @@ export default function Chat() {
     }
   }, [user, selectedChatId, isAuthReady]);
 
+  // Efecto para cargar los mensajes del chat seleccionado
   useEffect(() => {
     if (selectedChatId && user) {
       setIsLoading(true);
       const db = getFirestore();
       const messagesQuery = query(
         collection(db, `chats/${selectedChatId}/messages`),
-        orderBy("createdAt", "asc")
+        orderBy("createdAt", "desc") // Cambiado a desc para obtener los más recientes primero
       );
 
-      const unsubscribeMessages = onSnapshot(messagesQuery, (querySnapshot) => {
-        const fetchedMessages = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          author: doc.data().userId === user.uid ? "user" : "other",
-        }));
-        setMessages(fetchedMessages);
-        setIsLoading(false);
-      });
+      const unsubscribeMessages = onSnapshot(
+        messagesQuery,
+        (querySnapshot) => {
+          const fetchedMessages = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate(),
+          }));
+          // Invertimos el orden para mostrarlos cronológicamente
+          setMessages(fetchedMessages.reverse());
+          setIsLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching messages:", error);
+          setIsLoading(false);
+        }
+      );
 
       return () => unsubscribeMessages();
     }
   }, [selectedChatId, user]);
+
+  // Renderizar el componente EmptyChat cuando no hay mensajes
+  const EmptyChat = () => (
+    <Text style={styles.emptyText}>
+      No hay mensajes aún. ¡Comienza la conversación!
+    </Text>
+  );
 
   return (
     <View style={styles.container}>
@@ -214,11 +196,9 @@ export default function Chat() {
         setIsMenuOpen={handleSetIsMenuOpen}
       />
 
-      {/* Chat content */}
       <View
         style={[{ marginLeft: isWeb ? width * 0.15 : 0 }, styles.chatContent]}
       >
-        {/* VocalWise Logo */}
         <View style={styles.logo}>
           <Logo />
         </View>
@@ -238,23 +218,17 @@ export default function Chat() {
                 message={item.text}
                 fileName={item.fileName}
                 fileUrl={item.fileUrl}
+                id={item.id}
+                createdAt={item.createdAt}
               />
             )}
-            contentContainerStyle={{
-              gap: 15,
-              paddingLeft: 15,
-              paddingRight: Platform.OS === "web" ? "15%" : 5,
-              paddingBottom: Platform.OS !== "web" ? 70 : 5,
-            }}
+            contentContainerStyle={styles.flatListContent}
             automaticallyAdjustKeyboardInsets={true}
             keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={() => (
-              <Text style={{ color: "#999", textAlign: "center", padding: 20 }}>
-                No hay mensajes aún. ¡Comienza la conversación!
-              </Text>
-            )}
+            ListEmptyComponent={EmptyChat}
           />
         )}
+
         {user && <MessageInput user={user} chatId={selectedChatId} />}
       </View>
     </View>
@@ -284,5 +258,16 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "#FFF",
     marginTop: 10,
+  },
+  flatListContent: {
+    gap: 15,
+    paddingLeft: 15,
+    paddingRight: Platform.OS === "web" ? "15%" : 5,
+    paddingBottom: Platform.OS !== "web" ? 70 : 5,
+  },
+  emptyText: {
+    color: "#999",
+    textAlign: "center",
+    padding: 20,
   },
 });

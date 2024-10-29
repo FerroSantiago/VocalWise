@@ -76,6 +76,7 @@ const MessageInput = ({ user, chatId }) => {
       const db = getFirestore();
       const storage = getStorage();
       let fileUrl = null;
+      let finalChatId = chatId;
 
       if (fileObject) {
         const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
@@ -90,6 +91,7 @@ const MessageInput = ({ user, chatId }) => {
         userName: user.displayName || user.email,
         fileUrl: fileUrl,
         fileName: fileName,
+        author: "user",
       };
 
       const messageText = inputText.trim();
@@ -98,34 +100,63 @@ const MessageInput = ({ user, chatId }) => {
       setFileObject(null);
       setInputHeight(24);
 
-      if (!chatId) {
+      if (!finalChatId) {
         const newChatRef = await addDoc(collection(db, "chats"), {
           userId: user.uid,
           createdAt: serverTimestamp(),
           lastMessage: inputText.trim(),
           lastMessageTime: serverTimestamp(),
         });
-        chatId = newChatRef.id;
+        finalChatId = newChatRef.id;
       }
 
       // Actualizar el último mensaje del chat existente
       await Promise.all([
         setDoc(
-          doc(db, "chats", chatId),
+          doc(db, "chats", finalChatId),
           {
             lastMessage: messageText,
             lastMessageTime: serverTimestamp(),
           },
           { merge: true }
         ),
-        addDoc(collection(db, `chats/${chatId}/messages`), messageData),
+        addDoc(collection(db, `chats/${finalChatId}/messages`), messageData),
       ]);
+
+      setTimeout(() => {
+        sendAutoResponse(finalChatId);
+      }, 1000);
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
     } finally {
       setIsSending(false);
     }
   }, [inputText, fileObject, user, chatId, fileName]);
+
+  const sendAutoResponse = async (chatId) => {
+    const db = getFirestore();
+    const autoResponseData = {
+      text: "Actualmente me encuentro en etapa de desarrollo y no cuento con la capacidad de proveerte una respuesta en este momento. ¡Espero que podamos trabajar juntos en un futuro!",
+      createdAt: serverTimestamp(),
+      userId: "vocalwise",
+      userName: "VocalWise",
+      fileUrl: null,
+      fileName: null,
+      author: "vocalwise",
+    };
+
+    await addDoc(collection(db, `chats/${chatId}/messages`), autoResponseData);
+
+    // Actualizar el último mensaje del chat
+    await setDoc(
+      doc(db, "chats", chatId),
+      {
+        lastMessage: autoResponseData.text,
+        lastMessageTime: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  };
 
   const handleKeyPress = (e) => {
     if (Platform.OS === "web" && e.key === "Enter") {
