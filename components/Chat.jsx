@@ -262,7 +262,8 @@ const styles = StyleSheet.create({
   flatListContent: {
     gap: 15,
     paddingLeft: 15,
-    paddingRight: Platform.OS === "web" ? "15%" : 5,
+    paddingRight: Platform.OS === "web" ? "10%" : 5,
+    paddingLeft: Platform.OS === "web" ? "8%" : 0,
     paddingBottom: Platform.OS !== "web" ? 70 : 5,
   },
   emptyText: {

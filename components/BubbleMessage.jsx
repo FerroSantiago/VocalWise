@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(200,200,200,.1)",
   },
   systemBubble: {
     alignSelf: "flex-start",
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   fileName: {
-    color: "#BBB",
+    color: "#DDD",
     marginLeft: 5,
   },
   messageText: {
