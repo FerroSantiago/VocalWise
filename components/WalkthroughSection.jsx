@@ -119,7 +119,7 @@ const WalkthroughSection = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 50,
+    paddingBottom: 50,
     alignItems: "center",
     width: "100%",
   },

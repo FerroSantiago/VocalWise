@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform } from "react-native";
 import Svg, { Path, Defs, Filter, FeGaussianBlur } from "react-native-svg";
 
 const LogoAnimado = () => {
@@ -73,7 +73,7 @@ const LogoAnimado = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <>
       <Svg width="318" height="240" viewBox="0 0 424 319">
         {Filters}
 
@@ -112,17 +112,8 @@ const LogoAnimado = () => {
           {...(Platform.OS === "web" && { filter: "url(#glow)" })}
         />
       </Svg>
-    </View>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: Platform.OS === "web" ? 60 : 0,
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
 
 export default LogoAnimado;

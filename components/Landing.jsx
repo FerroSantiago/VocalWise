@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from "react";
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import PlansSection from "./PlansSection";
 import WalkthroughSection from "./WalkthroughSection";
-import LogoAnimado from "./LogoAnimado";
+import WelcomeSection from "./WelcomeSection";
 
 import { useRouter } from "expo-router";
+
+const NAVBAR_HEIGHT = 60;
 
 export default function Landing() {
   const [user, setUser] = useState(null);
@@ -46,7 +41,7 @@ export default function Landing() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.navContainer}>
+      <View style={[styles.navContainer, { height: NAVBAR_HEIGHT }]}>
         <View style={styles.accountContainer}>
           {user ? (
             <>
@@ -82,15 +77,8 @@ export default function Landing() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingTop: 80 }}>
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Bienvenido a VocalWise</Text>
-          <Text style={styles.welcomeDescription}>
-            Descubre cómo nuestra plataforma puede cambiar tu vida.
-          </Text>
-          <LogoAnimado />
-        </View>
-
+      <ScrollView contentContainerStyle={{ paddingTop: NAVBAR_HEIGHT }}>
+        <WelcomeSection navbarHeight={NAVBAR_HEIGHT} />
         <WalkthroughSection />
         <PlansSection />
       </ScrollView>
@@ -112,7 +100,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    paddingHorizontal: 16,
+    paddingHorizontal: 5,
     backdropFilter: "blur(4px)",
     zIndex: 10,
   },
@@ -133,21 +121,6 @@ const styles = StyleSheet.create({
   },
   logButton: {
     backgroundColor: "white",
-  },
-  welcomeSection: {
-    alignItems: "center",
-    padding: 16,
-    marginTop: 30,
-  },
-  welcomeTitle: {
-    fontSize: 55,
-    color: "white",
-  },
-  welcomeDescription: {
-    fontSize: 16,
-    color: "white",
-    textAlign: "center",
-    marginVertical: 20,
   },
   buttonText: {
     color: "white",
