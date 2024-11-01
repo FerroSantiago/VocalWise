@@ -187,6 +187,8 @@ const SideMenu = ({
   const router = useRouter();
   const db = getFirestore();
 
+  const [hasEmptyChat, setHasEmptyChat] = useState(false);
+
   useEffect(() => {
     if (!isWeb) {
       Animated.parallel([
@@ -213,9 +215,39 @@ const SideMenu = ({
     }
   };
 
+  useEffect(() => {
+    const checkEmptyChats = async () => {
+      try {
+        for (const chat of chats) {
+          const messagesRef = collection(db, `chats/${chat.id}/messages`);
+          const messagesSnapshot = await getDocs(messagesRef);
+          if (messagesSnapshot.empty) {
+            setHasEmptyChat(true);
+            return;
+          }
+        }
+        setHasEmptyChat(false);
+      } catch (error) {
+        console.error("Error al verificar chats vacíos:", error);
+      }
+    };
+
+    checkEmptyChats();
+  }, [chats, db]);
+
   const createNewChat = useCallback(async () => {
     try {
-      const db = getFirestore();
+      if (hasEmptyChat) {
+        const message =
+          "Ya tienes un chat vacío. Por favor, utiliza ese chat o elimínalo antes de crear uno nuevo.";
+        if (isWeb) {
+          window.alert(message);
+        } else {
+          Alert.alert("Aviso", message);
+        }
+        return;
+      }
+
       const newChatRef = await addDoc(collection(db, "chats"), {
         userId: user.uid,
         createdAt: serverTimestamp(),
@@ -227,7 +259,7 @@ const SideMenu = ({
     } catch (error) {
       console.error("Error al crear un nuevo chat:", error);
     }
-  }, [user, onSelectChat, setMessages]);
+  }, [user, onSelectChat, setMessages, hasEmptyChat, isWeb]);
 
   const handleDeleteChat = async (chatId) => {
     try {
@@ -309,11 +341,24 @@ const SideMenu = ({
             onPress={createNewChat}
             style={({ pressed }) => [
               styles.newChatButton,
-              pressed && styles.pressedButton,
+              hasEmptyChat && styles.disabledButton,
+              pressed && !hasEmptyChat && styles.pressedButton,
             ]}
+            disabled={hasEmptyChat}
           >
-            <Icon name="plus" size={20} color="#CCC" />
-            <Text style={styles.newChatButtonText}>Nuevo chat</Text>
+            <Icon
+              name="plus"
+              size={20}
+              color={hasEmptyChat ? "#666" : "#CCC"}
+            />
+            <Text
+              style={[
+                styles.newChatButtonText,
+                hasEmptyChat && styles.disabledButtonText,
+              ]}
+            >
+              Nuevo chat
+            </Text>
           </Pressable>
           <FlatList
             data={chats}
@@ -489,6 +534,13 @@ const styles = StyleSheet.create({
   pressedButton: {
     backgroundColor: "rgba(0, 0, 0, 0.25)",
     transform: [{ scale: 0.97 }],
+  },
+  disabledButton: {
+    backgroundColor: "#444",
+    opacity: 0.5,
+  },
+  disabledButtonText: {
+    color: "#666",
   },
 });
 

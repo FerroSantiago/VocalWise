@@ -3,9 +3,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import PlansSection from "./PlansSection";
-import WalkthroughSection from "./WalkthroughSection";
-import WelcomeSection from "./WelcomeSection";
+import PlansSection from "./landingSections/PlansSection";
+import WalkthroughSection from "./landingSections/WalkthroughSection";
+import WelcomeSection from "./landingSections/WelcomeSection";
 
 import { useRouter } from "expo-router";
 

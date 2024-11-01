@@ -23,9 +23,9 @@ import {
 
 // Componentes
 import Logo from "./Logo";
-import MessageInput from "./MessageInput";
-import SideMenu from "./SideMenu";
-import BubbleMessage from "./BubbleMessage"; // Importamos el nuevo componente separado
+import MessageInput from "./chatComponents/MessageInput";
+import SideMenu from "./chatComponents/SideMenu";
+import BubbleMessage from "./chatComponents/BubbleMessage"; // Importamos el nuevo componente separado
 
 export default function Chat() {
   const { height, width } = useWindowDimensions();

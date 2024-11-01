@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import LogoAnimado from "./LogoAnimado";
+import LogoAnimado from "../LogoAnimado";
 
 const WelcomeSection = ({ navbarHeight }) => {
   const { height } = useWindowDimensions();
