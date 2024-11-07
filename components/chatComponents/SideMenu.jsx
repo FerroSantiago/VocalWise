@@ -248,14 +248,20 @@ const SideMenu = ({
         return;
       }
 
-      const newChatRef = await addDoc(collection(db, "chats"), {
+      const chatData = {
         userId: user.uid,
         createdAt: serverTimestamp(),
         lastMessage: "Nuevo chat",
         lastMessageTime: serverTimestamp(),
-      });
-      onSelectChat(newChatRef.id);
-      setMessages([]);
+      };
+
+      const newChatRef = await addDoc(collection(db, "chats"), chatData);
+
+      // Esperar un momento para que Firestore propague los cambios
+      setTimeout(() => {
+        onSelectChat(newChatRef.id);
+        setMessages([]);
+      }, 100);
     } catch (error) {
       console.error("Error al crear un nuevo chat:", error);
     }

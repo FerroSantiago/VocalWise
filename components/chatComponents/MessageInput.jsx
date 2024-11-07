@@ -12,16 +12,17 @@ import {
 import Icon from "react-native-vector-icons/Feather";
 import * as DocumentPicker from "expo-document-picker";
 import {
-  getFirestore,
-  collection,
   addDoc,
+  collection,
+  doc,
+  getFirestore,
+  runTransaction,
   setDoc,
   serverTimestamp,
-  doc,
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const MessageInput = ({ user, chatId }) => {
+const MessageInput = ({ user, chatId, onChatCreated }) => {
   const [inputText, setInputText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
@@ -78,6 +79,33 @@ const MessageInput = ({ user, chatId }) => {
       let fileUrl = null;
       let finalChatId = chatId;
 
+      // Crear nuevo chat si es necesario
+      if (!finalChatId) {
+        const chatData = {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+          lastMessage: inputText.trim(),
+          lastMessageTime: serverTimestamp(),
+        };
+
+        // Primero crear el chat y esperar a que se complete
+        const newChatRef = await addDoc(collection(db, "chats"), chatData);
+        finalChatId = newChatRef.id;
+
+        console.log("Nuevo chat creado:", finalChatId);
+
+        // Esperar un momento para que Firestore propague los cambios
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        if (onChatCreated) {
+          console.log("Llamando onChatCreated con:", finalChatId);
+          onChatCreated(finalChatId);
+          // Esperar otro momento para que se actualice el estado
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
+      // Procesar archivo si existe
       if (fileObject) {
         const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
         await uploadBytes(fileRef, fileObject);
@@ -94,35 +122,29 @@ const MessageInput = ({ user, chatId }) => {
         author: "user",
       };
 
-      const messageText = inputText.trim();
+      // Usar una transacción para asegurar la consistencia
+      await runTransaction(db, async (transaction) => {
+        // Actualizar el último mensaje del chat
+        const chatRef = doc(db, "chats", finalChatId);
+        transaction.update(chatRef, {
+          lastMessage: messageData.text,
+          lastMessageTime: serverTimestamp(),
+        });
+
+        // Añadir el mensaje
+        const newMessageRef = doc(
+          collection(db, `chats/${finalChatId}/messages`)
+        );
+        transaction.set(newMessageRef, messageData);
+      });
+
+      // Limpiar el estado local
       setInputText("");
       setFileName("");
       setFileObject(null);
       setInputHeight(24);
 
-      if (!finalChatId) {
-        const newChatRef = await addDoc(collection(db, "chats"), {
-          userId: user.uid,
-          createdAt: serverTimestamp(),
-          lastMessage: inputText.trim(),
-          lastMessageTime: serverTimestamp(),
-        });
-        finalChatId = newChatRef.id;
-      }
-
-      // Actualizar el último mensaje del chat existente
-      await Promise.all([
-        setDoc(
-          doc(db, "chats", finalChatId),
-          {
-            lastMessage: messageText,
-            lastMessageTime: serverTimestamp(),
-          },
-          { merge: true }
-        ),
-        addDoc(collection(db, `chats/${finalChatId}/messages`), messageData),
-      ]);
-
+      // Enviar respuesta automática después de un delay
       setTimeout(() => {
         sendAutoResponse(finalChatId);
       }, 1000);
@@ -131,7 +153,7 @@ const MessageInput = ({ user, chatId }) => {
     } finally {
       setIsSending(false);
     }
-  }, [inputText, fileObject, user, chatId, fileName]);
+  }, [inputText, fileObject, user, chatId, fileName, onChatCreated]);
 
   const sendAutoResponse = async (chatId) => {
     const db = getFirestore();

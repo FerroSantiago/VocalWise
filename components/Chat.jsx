@@ -42,6 +42,7 @@ export default function Chat() {
 
   const handleSelectChat = useCallback(
     (chatId) => {
+      console.log("handleSelectChat llamado con:", chatId);
       if (chatId !== selectedChatId) {
         setIsLoading(true);
         setSelectedChatId(chatId);
@@ -141,37 +142,50 @@ export default function Chat() {
 
       return () => unsubscribeChats();
     }
-  }, [user, selectedChatId, isAuthReady]);
+  }, [user, isAuthReady]);
 
   // Efecto para cargar los mensajes del chat seleccionado
   useEffect(() => {
     if (selectedChatId && user) {
       setIsLoading(true);
       const db = getFirestore();
-      const messagesQuery = query(
-        collection(db, `chats/${selectedChatId}/messages`),
-        orderBy("createdAt", "desc") // Cambiado a desc para obtener los más recientes primero
-      );
 
-      const unsubscribeMessages = onSnapshot(
-        messagesQuery,
-        (querySnapshot) => {
-          const fetchedMessages = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate(),
-          }));
-          // Invertimos el orden para mostrarlos cronológicamente
-          setMessages(fetchedMessages.reverse());
-          setIsLoading(false);
-        },
-        (error) => {
-          console.error("Error fetching messages:", error);
-          setIsLoading(false);
-        }
-      );
+      // Crear una función para manejar la suscripción
+      const subscribeToMessages = () => {
+        const messagesQuery = query(
+          collection(db, `chats/${selectedChatId}/messages`),
+          orderBy("createdAt", "desc")
+        );
 
-      return () => unsubscribeMessages();
+        return onSnapshot(
+          messagesQuery,
+          (querySnapshot) => {
+            const fetchedMessages = querySnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              createdAt: doc.data().createdAt?.toDate(),
+            }));
+            setMessages(fetchedMessages.reverse());
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error("Error fetching messages:", error);
+            setIsLoading(false);
+          }
+        );
+      };
+
+      // Crear un timeout para dar tiempo a Firestore
+      const timeoutId = setTimeout(() => {
+        const unsubscribe = subscribeToMessages();
+        return () => {
+          unsubscribe();
+        };
+      }, 100);
+
+      return () => {
+        clearTimeout(timeoutId);
+      };
     }
   }, [selectedChatId, user]);
 
@@ -229,7 +243,16 @@ export default function Chat() {
           />
         )}
 
-        {user && <MessageInput user={user} chatId={selectedChatId} />}
+        {user && (
+          <MessageInput
+            user={user}
+            chatId={selectedChatId}
+            onChatCreated={(newChatId) => {
+              setSelectedChatId(newChatId);
+              handleSelectChat(newChatId);
+            }}
+          />
+        )}
       </View>
     </View>
   );
