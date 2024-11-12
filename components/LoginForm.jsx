@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   SafeAreaView,
@@ -20,6 +21,10 @@ import { useRouter } from "expo-router";
 
 const auth = getAuth(appFirebase);
 
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_DURATION = 5 * 60 * 1000;
+const ATTEMPT_WINDOW = 60 * 1000;
+
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,10 +32,121 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutEndTime, setLockoutEndTime] = useState(null);
+  const [remainingTime, setRemainingTime] = useState("");
 
   const router = useRouter();
 
+  useEffect(() => {
+    checkLockoutStatus();
+  }, []);
+
+  useEffect(() => {
+    if (isLocked) {
+      const interval = setInterval(checkLockoutStatus, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isLocked]);
+
+  useEffect(() => {
+    if (isLocked && lockoutEndTime) {
+      const interval = setInterval(() => {
+        const remaining = Math.max(0, lockoutEndTime - Date.now());
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        const timeString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        setRemainingTime(timeString);
+
+        if (remaining <= 0) {
+          clearInterval(interval);
+          setIsLocked(false);
+          setLockoutEndTime(null);
+          AsyncStorage.removeItem("loginLockout");
+          AsyncStorage.removeItem("loginAttempts");
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isLocked, lockoutEndTime]);
+
+  const checkLockoutStatus = async () => {
+    try {
+      const lockoutData = await AsyncStorage.getItem("loginLockout");
+      if (lockoutData) {
+        const { endTime } = JSON.parse(lockoutData);
+        if (Date.now() < endTime) {
+          setIsLocked(true);
+          setLockoutEndTime(endTime);
+          const remaining = Math.max(0, endTime - Date.now());
+          const minutes = Math.floor(remaining / 60000);
+          const seconds = Math.floor((remaining % 60000) / 1000);
+          setRemainingTime(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+        } else {
+          // El bloqueo ha terminado
+          await AsyncStorage.removeItem("loginLockout");
+          await AsyncStorage.removeItem("loginAttempts");
+          setIsLocked(false);
+          setLockoutEndTime(null);
+          setRemainingTime("");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking lockout status:", error);
+    }
+  };
+
+  const updateLoginAttempts = async () => {
+    try {
+      const now = Date.now();
+      const attemptsData = await AsyncStorage.getItem("loginAttempts");
+      let attempts = attemptsData ? JSON.parse(attemptsData) : [];
+
+      // Filtrar intentos dentro de la ventana de tiempo
+      attempts = attempts.filter(
+        (timestamp) => now - timestamp < ATTEMPT_WINDOW
+      );
+      attempts.push(now);
+
+      await AsyncStorage.setItem("loginAttempts", JSON.stringify(attempts));
+
+      if (attempts.length >= MAX_ATTEMPTS) {
+        // Activar bloqueo
+        const endTime = now + LOCKOUT_DURATION;
+        await AsyncStorage.setItem("loginLockout", JSON.stringify({ endTime }));
+        setIsLocked(true);
+        setLockoutEndTime(endTime);
+
+        // Redirigir a la página de recuperación
+        Alert.alert(
+          "Cuenta bloqueada",
+          "Has excedido el número máximo de intentos. Tu cuenta ha sido bloqueada por 5 minutos.",
+          [{ text: "OK", onPress: () => router.push("/recovery") }]
+        );
+      }
+    } catch (error) {
+      console.error("Error updating login attempts:", error);
+    }
+  };
+
+  const getRemainingTime = () => {
+    if (!lockoutEndTime) return "";
+    const remaining = Math.max(0, lockoutEndTime - Date.now());
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
   const login = async () => {
+    if (isLocked) {
+      Alert.alert(
+        "Cuenta bloqueada",
+        `Por favor espera ${getRemainingTime()} minutos antes de intentar nuevamente.`
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -40,6 +156,8 @@ export default function LoginForm() {
       );
 
       await AsyncStorage.setItem("user", JSON.stringify(userCredential.user));
+      // Limpiar los intentos después de un login exitoso
+      await AsyncStorage.removeItem("loginAttempts");
 
       setTimeout(() => {
         setIsLoading(false);
@@ -49,6 +167,7 @@ export default function LoginForm() {
       console.log(error);
       setErrorMessage("Usuario o contraseña incorrecta.");
       setIsLoading(false);
+      await updateLoginAttempts();
     }
   };
 
@@ -107,8 +226,14 @@ export default function LoginForm() {
         </View>
 
         {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text> // Mostrar error si existe
+          <Text style={styles.errorText}>{errorMessage}</Text>
         ) : null}
+
+        {isLocked && (
+          <Text style={styles.errorText}>
+            Cuenta bloqueada. Tiempo restante: {remainingTime}
+          </Text>
+        )}
 
         <View style={styles.rememberMeContainer}>
           <Pressable
