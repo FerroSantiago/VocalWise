@@ -117,13 +117,7 @@ export default function LoginForm() {
         await AsyncStorage.setItem("loginLockout", JSON.stringify({ endTime }));
         setIsLocked(true);
         setLockoutEndTime(endTime);
-
-        // Redirigir a la página de recuperación
-        Alert.alert(
-          "Cuenta bloqueada",
-          "Has excedido el número máximo de intentos. Tu cuenta ha sido bloqueada por 5 minutos.",
-          [{ text: "OK", onPress: () => router.push("/recovery") }]
-        );
+        router.push("/recovery");
       }
     } catch (error) {
       console.error("Error updating login attempts:", error);
