@@ -14,12 +14,26 @@ import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
 
 import appFirebase from "../credenciales";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useRouter } from "expo-router";
 
 const auth = getAuth(appFirebase);
+const googleProvider = new GoogleAuthProvider();
 
 const MAX_ATTEMPTS = 3;
 const LOCKOUT_DURATION = 5 * 60 * 1000;
@@ -164,6 +178,53 @@ export default function LoginForm() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // Guardar en AsyncStorage
+      await AsyncStorage.setItem("user", JSON.stringify(result.user));
+
+      // Guardar usuario en Firestore
+      const db = getFirestore();
+      const userRef = doc(db, "users", result.user.uid);
+
+      // Verificar si el usuario ya existe en Firestore
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // Si no existe, crear el documento del usuario
+        await setDoc(userRef, {
+          email: result.user.email,
+          displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+        });
+      } else {
+        // Si existe, actualizar último login
+        await updateDoc(userRef, {
+          lastLogin: serverTimestamp(),
+        });
+      }
+
+      // Limpiar intentos previos de login
+      await AsyncStorage.removeItem("loginAttempts");
+
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/chat");
+      }, 1000);
+    } catch (error) {
+      console.error("Error durante el login con Google:", error);
+      setErrorMessage(
+        "Error al iniciar sesión con Google. Por favor, intenta nuevamente."
+      );
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} role="form">
       <View style={styles.formContainer}>
@@ -275,6 +336,8 @@ export default function LoginForm() {
         <View style={styles.separator} />
         <Pressable
           style={styles.socialButton}
+          onPress={handleGoogleLogin}
+          disabled={isLoading}
           role="button"
           aria-label="Iniciar sesión con Google"
         >
