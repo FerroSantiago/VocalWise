@@ -8,8 +8,8 @@ import {
   Text,
   TextInput,
   View,
-  Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
 import appFirebase from "../credenciales";
@@ -65,14 +65,13 @@ export default function RecoveryForm() {
       await sendPasswordResetEmail(auth, email);
 
       // Limpiar los intentos de login y el bloqueo
-      await AsyncStorage.removeItem("loginAttempts");
-      await AsyncStorage.removeItem("loginLockout");
+      await AsyncStorage.multiRemove(["loginAttempts", "loginLockout"]);
 
       setSuccessMessage(
         "Se ha enviado un correo con las instrucciones para recuperar tu contraseña"
       );
 
-      // Redirigir al login después de 3 segundos
+      // Redirigir al home
       setTimeout(() => {
         router.push("/");
       }, 3000);
@@ -104,7 +103,7 @@ export default function RecoveryForm() {
             source={logoBlanco}
             style={styles.logo}
             resizeMode="contain"
-            aria-label="Logo de la aplicación"
+            accessibilityLabel="Logo de la aplicación"
           />
         </View>
 
@@ -121,7 +120,7 @@ export default function RecoveryForm() {
             autoComplete="email"
             autoCapitalize="none"
             inputMode="email"
-            aria-label="Campo de email"
+            accessibilityLabel="Campo de email"
           />
         </View>
 
@@ -141,7 +140,7 @@ export default function RecoveryForm() {
           ]}
           onPress={handleRecovery}
           disabled={isLoading}
-          aria-label="Enviar correo de recuperación"
+          accessibilityLabel="Enviar correo de recuperación"
         >
           {isLoading ? (
             <ActivityIndicator color="#ffffff" />
@@ -151,7 +150,7 @@ export default function RecoveryForm() {
         </Pressable>
 
         <Pressable
-          onPress={() => router.push("/")}
+          onPress={() => router.push("/login")}
           style={styles.backButton}
           aria-label="Volver al login"
         >

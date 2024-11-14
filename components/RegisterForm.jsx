@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -223,6 +224,14 @@ export default function RegistrationForm() {
           {errors.general && (
             <Text style={[styles.errorText]}>{errors.general}</Text>
           )}
+          <Pressable
+            onPress={() => router.push("/")}
+            style={styles.backButton}
+            aria-label="Volver al home"
+          >
+            <Feather name="arrow-left" size={20} color="#94b1f3" />
+            <Text style={styles.backButtonText}>Volver a Home</Text>
+          </Pressable>
         </View>
         <Text style={styles.termsText}>
           Al crear una cuenta aquí, aceptas nuestras{" "}
@@ -325,5 +334,16 @@ const styles = StyleSheet.create({
   },
   link: {
     color: "#60A5FA",
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    marginTop: 24,
+    padding: 8,
+  },
+  backButtonText: {
+    color: "#94b1f3",
+    marginLeft: 8,
   },
 });

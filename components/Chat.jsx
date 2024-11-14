@@ -120,8 +120,18 @@ export default function Chat() {
           }));
           setChats(fetchedChats);
 
-          if (fetchedChats.length > 0 && !selectedChatId) {
-            setSelectedChatId(fetchedChats[0].id);
+          if (fetchedChats.length > 0) {
+            // Si hay un chat seleccionado y ya no existe, seleccionar el primero
+            if (
+              !selectedChatId ||
+              !fetchedChats.find((chat) => chat.id === selectedChatId)
+            ) {
+              setSelectedChatId(fetchedChats[0].id);
+            }
+          } else {
+            // Si no hay chats, limpiar la selección y los mensajes
+            setSelectedChatId(null);
+            setMessages([]);
           }
           setIsLoading(false);
         },
@@ -146,47 +156,61 @@ export default function Chat() {
 
   // Efecto para cargar los mensajes del chat seleccionado
   useEffect(() => {
-    if (selectedChatId && user) {
-      setIsLoading(true);
-      const db = getFirestore();
+    let unsubscribe = null;
 
-      // Crear una función para manejar la suscripción
-      const subscribeToMessages = () => {
-        const messagesQuery = query(
-          collection(db, `chats/${selectedChatId}/messages`),
-          orderBy("createdAt", "desc")
-        );
+    const loadMessages = async () => {
+      if (selectedChatId && user) {
+        setIsLoading(true);
+        const db = getFirestore();
 
-        return onSnapshot(
-          messagesQuery,
-          (querySnapshot) => {
-            const fetchedMessages = querySnapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-              createdAt: doc.data().createdAt?.toDate(),
-            }));
-            setMessages(fetchedMessages.reverse());
-            setIsLoading(false);
-          },
-          (error) => {
-            console.error("Error fetching messages:", error);
-            setIsLoading(false);
-          }
-        );
-      };
+        try {
+          const messagesQuery = query(
+            collection(db, `chats/${selectedChatId}/messages`),
+            orderBy("createdAt", "desc")
+          );
 
-      // Crear un timeout para dar tiempo a Firestore
-      const timeoutId = setTimeout(() => {
-        const unsubscribe = subscribeToMessages();
-        return () => {
-          unsubscribe();
-        };
-      }, 100);
+          unsubscribe = onSnapshot(
+            messagesQuery,
+            (querySnapshot) => {
+              const fetchedMessages = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+                createdAt: doc.data().createdAt?.toDate(),
+              }));
+              setMessages(fetchedMessages.reverse());
+              setIsLoading(false);
+            },
+            (error) => {
+              console.error("Error fetching messages:", error);
+              // Si hay un error de permisos o el documento no existe
+              if (
+                error.code === "permission-denied" ||
+                error.code === "not-found"
+              ) {
+                setMessages([]);
+              }
+              setIsLoading(false);
+            }
+          );
+        } catch (error) {
+          console.error("Error setting up messages listener:", error);
+          setIsLoading(false);
+        }
+      } else {
+        // Si no hay chat seleccionado, limpiar mensajes y quitar loading
+        setMessages([]);
+        setIsLoading(false);
+      }
+    };
 
-      return () => {
-        clearTimeout(timeoutId);
-      };
-    }
+    loadMessages();
+
+    // Cleanup función
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [selectedChatId, user]);
 
   // Renderizar el componente EmptyChat cuando no hay mensajes
@@ -243,7 +267,7 @@ export default function Chat() {
           />
         )}
 
-        {user && (
+        {user && selectedChatId && (
           <MessageInput
             user={user}
             chatId={selectedChatId}

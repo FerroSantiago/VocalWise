@@ -15,6 +15,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getFirestore,
   runTransaction,
   setDoc,
@@ -79,7 +80,14 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
       let fileUrl = null;
       let finalChatId = chatId;
 
-      // Crear nuevo chat si es necesario
+      // Si hay un archivo, procesarlo primero
+      if (fileObject) {
+        const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
+        await uploadBytes(fileRef, fileObject);
+        fileUrl = await getDownloadURL(fileRef);
+      }
+
+      // Si no hay chatId, crear un nuevo chat
       if (!finalChatId) {
         const chatData = {
           userId: user.uid,
@@ -88,28 +96,15 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
           lastMessageTime: serverTimestamp(),
         };
 
-        // Primero crear el chat y esperar a que se complete
         const newChatRef = await addDoc(collection(db, "chats"), chatData);
         finalChatId = newChatRef.id;
 
-        console.log("Nuevo chat creado:", finalChatId);
-
-        // Esperar un momento para que Firestore propague los cambios
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
         if (onChatCreated) {
-          console.log("Llamando onChatCreated con:", finalChatId);
           onChatCreated(finalChatId);
-          // Esperar otro momento para que se actualice el estado
-          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-      }
 
-      // Procesar archivo si existe
-      if (fileObject) {
-        const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
-        await uploadBytes(fileRef, fileObject);
-        fileUrl = await getDownloadURL(fileRef);
+        // Esperar para asegurar que el chat se creó
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       const messageData = {
@@ -122,10 +117,23 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
         author: "user",
       };
 
-      // Usar una transacción para asegurar la consistencia
+      // Verificar si el chat existe antes de la transacción
+      const chatRef = doc(db, "chats", finalChatId);
+      const chatDoc = await getDoc(chatRef);
+
+      if (!chatDoc.exists()) {
+        // Si el chat no existe, crearlo primero
+        await setDoc(chatRef, {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+          lastMessage: inputText.trim(),
+          lastMessageTime: serverTimestamp(),
+        });
+      }
+
+      // Ahora realizar la transacción
       await runTransaction(db, async (transaction) => {
         // Actualizar el último mensaje del chat
-        const chatRef = doc(db, "chats", finalChatId);
         transaction.update(chatRef, {
           lastMessage: messageData.text,
           lastMessageTime: serverTimestamp(),
@@ -150,6 +158,11 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
       }, 1000);
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
+      // Manejar el error específicamente
+      if (error.code === "not-found") {
+        console.log("El chat no existe, creando uno nuevo...");
+        // Aquí podrías implementar la lógica para crear un nuevo chat
+      }
     } finally {
       setIsSending(false);
     }

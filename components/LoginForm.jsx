@@ -117,7 +117,6 @@ export default function LoginForm() {
         await AsyncStorage.setItem("loginLockout", JSON.stringify({ endTime }));
         setIsLocked(true);
         setLockoutEndTime(endTime);
-        router.push("/recovery");
       }
     } catch (error) {
       console.error("Error updating login attempts:", error);
@@ -265,7 +264,11 @@ export default function LoginForm() {
           >
             <Text style={styles.linkText}>Registrarme</Text>
           </Pressable>
-          <Pressable role="link" aria-label="Recuperar contraseña">
+          <Pressable
+            onPress={() => router.push("/recovery")}
+            role="link"
+            aria-label="Recuperar contraseña"
+          >
             <Text style={styles.linkText}>Olvidé mi contraseña</Text>
           </Pressable>
         </View>
