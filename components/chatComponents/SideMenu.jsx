@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Image,
   Keyboard,
   Platform,
   Pressable,
@@ -306,6 +307,21 @@ const SideMenu = ({
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleImageError = () => {
+    console.log("Error cargando imagen:", user?.photoURL);
+    setImageError(true);
+  };
+
+  const getPhotoURL = () => {
+    if (!user?.photoURL) return null;
+
+    // Si es una URL de Google Photos, asegurarse de que tenga el tamaño correcto
+    if (user.photoURL.includes("googleusercontent.com")) {
+      return user.photoURL.replace("s96-c", "s400-c");
+    }
+    return user.photoURL;
+  };
+
   return (
     <>
       <Animated.View
@@ -381,6 +397,20 @@ const SideMenu = ({
           />
         </View>
         <View style={styles.userInfoContainer}>
+          <View style={styles.profileContainer}>
+            <Image
+              source={{ uri: getPhotoURL() }}
+              style={styles.profilePic}
+              onError={handleImageError}
+            />
+            <Text
+              style={styles.userDisplayName}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {user?.displayName || "Cargando usuario..."}
+            </Text>
+          </View>
           <Pressable
             onPress={logout}
             style={({ pressed }) => [
@@ -390,17 +420,6 @@ const SideMenu = ({
           >
             <Icon name="log-out" size={20} color="#CCC" />
           </Pressable>
-          {user ? (
-            <Text
-              style={styles.userDisplayName}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {user.displayName}
-            </Text>
-          ) : (
-            <Text style={styles.userDisplayName}>Cargando usuario...</Text>
-          )}
         </View>
       </Animated.View>
     </>
@@ -469,7 +488,8 @@ const styles = StyleSheet.create({
   },
   userInfoContainer: {
     alignItems: "center",
-    marginBottom: Platform.OS === "web" ? 20 : 60,
+    marginBottom: Platform.OS === "web" ? 0 : 60,
+    width: "100%",
   },
   accountButton: {
     padding: 5,
@@ -482,7 +502,8 @@ const styles = StyleSheet.create({
   userDisplayName: {
     color: "white",
     textAlign: "center",
-    maxWidth: "100%",
+    maxWidth: "90%",
+    fontSize: 14,
     ...(Platform.OS === "web" ? { userSelect: "text" } : {}),
   },
   pressedButton: {
@@ -547,6 +568,18 @@ const styles = StyleSheet.create({
   },
   disabledButtonText: {
     color: "#666",
+  },
+  profileContainer: {
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 10,
+  },
+  profilePic: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 8,
+    backgroundColor: "#444", // Para mientras carga la imagen
   },
 });
 

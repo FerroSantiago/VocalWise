@@ -204,13 +204,24 @@ export default function LoginForm() {
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
 
-      // Guardar en AsyncStorage
-      await AsyncStorage.setItem("user", JSON.stringify(result.user));
+      const photoURL = user.photoURL
+        ? user.photoURL.replace("s96-c", "s400-c")
+        : user.photoURL;
+
+      // Crear objeto de usuario con la URL de foto actualizada
+      const userToStore = {
+        ...user,
+        photoURL: photoURL,
+      };
+
+      // Guardar en AsyncStorage con la URL actualizada
+      await AsyncStorage.setItem("user", JSON.stringify(userToStore));
 
       // Guardar usuario en Firestore
       const db = getFirestore();
-      const userRef = doc(db, "users", result.user.uid);
+      const userRef = doc(db, "users", user.uid);
 
       // Verificar si el usuario ya existe en Firestore
       const userDoc = await getDoc(userRef);
@@ -218,9 +229,9 @@ export default function LoginForm() {
       if (!userDoc.exists()) {
         // Si no existe, crear el documento del usuario
         await setDoc(userRef, {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: photoURL,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
         });
@@ -228,11 +239,18 @@ export default function LoginForm() {
         // Si existe, actualizar último login
         await updateDoc(userRef, {
           lastLogin: serverTimestamp(),
+          photoURL: photoURL,
         });
       }
 
       // Limpiar intentos previos de login
       await AsyncStorage.removeItem("loginAttempts");
+
+      const savedUser = await AsyncStorage.getItem("user");
+      console.log("Usuario guardado en AsyncStorage:", JSON.parse(savedUser));
+
+      const updatedDoc = await getDoc(userRef);
+      console.log("Usuario guardado en Firestore:", updatedDoc.data());
 
       setTimeout(() => {
         setIsLoading(false);
@@ -240,6 +258,12 @@ export default function LoginForm() {
       }, 1000);
     } catch (error) {
       console.error("Error durante el login con Google:", error);
+      console.error("Error completo:", {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+      });
+
       setErrorMessage(
         "Error al iniciar sesión con Google. Por favor, intenta nuevamente."
       );

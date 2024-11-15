@@ -1,10 +1,10 @@
 import * as ImagePicker from "expo-image-picker";
-import { Platform } from "react-native";
 import defaultProfilePic from "../assets/defaultProfilePic.jpg";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -23,7 +23,9 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { getFirestore, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "expo-router";
+import { Asset } from "expo-asset";
 
 const auth = getAuth(appFirebase);
 const firestore = getFirestore(appFirebase);
@@ -35,9 +37,12 @@ export default function RegistrationForm() {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [profileImage, setProfileImage] = useState(null);
+  const [scale, setScale] = useState(1);
+
+  const storage = getStorage();
   const router = useRouter();
 
   const validateEmail = (email) => {
@@ -83,11 +88,25 @@ export default function RegistrationForm() {
     return valid;
   };
 
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const handleResize = () => {
+        // Cambiamos el divisor para hacer el formulario más grande
+        const baseScale = 1.3; // Factor de escala base
+        setScale(Math.min(baseScale, (window.innerHeight / 900) * baseScale));
+      };
+      window.addEventListener("resize", handleResize);
+      handleResize();
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
   const register = async () => {
     if (!validateFields()) return;
     setIsLoading(true);
 
     try {
+      // 1. Crear usuario
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -95,57 +114,136 @@ export default function RegistrationForm() {
       );
       const user = userCredential.user;
 
-      // Actualizar el perfil del usuario
-      await updateProfile(user, {
-        displayName: displayName,
-      });
+      // 2. Subir imagen y obtener URL
+      const photoURL = await uploadImage(user.uid);
 
-      // Actualizar Firestore
+      // 3. Actualizar Firestore primero
       await setDoc(doc(firestore, "users", user.uid), {
         email: email,
         displayName: displayName,
+        photoURL: photoURL,
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
-        photoURL: null,
       });
 
-      await AsyncStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          displayName: displayName, // Asegurar que el displayName se guarda en AsyncStorage
-        })
-      );
+      // 4. Actualizar perfil de Auth
+      await updateProfile(user, {
+        displayName: displayName,
+        photoURL: photoURL,
+      });
 
-      console.log("Registro OK");
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push("/chat");
-      }, 1000);
+      // 5. Recargar usuario y guardar en AsyncStorage
+      await user.reload();
+      const updatedUser = auth.currentUser;
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+
+      setIsLoading(false);
+      router.push("/chat");
     } catch (error) {
-      console.log(error);
-
-      // Verificar si el el email ya está en uso
+      console.error("Error completo:", error);
       if (error.code === "auth/email-already-in-use") {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
+        setErrors((prev) => ({
+          ...prev,
           email: "El email ya está en uso.",
         }));
       } else {
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          general: "No se pudo registrar el usuario. Intente nuevamente.",
+        setErrors((prev) => ({
+          ...prev,
+          general: "Error en el registro: " + error.message,
         }));
       }
       setIsLoading(false);
     }
   };
 
+  const pickImage = async () => {
+    if (Platform.OS !== "web") {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Se necesitan permisos para acceder a la galería");
+        return;
+      }
+    }
+
+    try {
+      if (Platform.OS === "web") {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.onchange = async (e) => {
+          const file = e.target.files[0];
+          setProfileImage(file);
+        };
+        input.click();
+      } else {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.5,
+        });
+
+        if (!result.canceled) {
+          setProfileImage(result.assets[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error al seleccionar imagen");
+    }
+  };
+
+  const uploadImage = async (uid) => {
+    try {
+      const storageRef = ref(storage, `profilePics/${uid}`);
+
+      if (!profileImage) {
+        // Manejar la imagen por defecto
+        const asset = Asset.fromModule(defaultProfilePic);
+        await asset.downloadAsync();
+        const response = await fetch(asset.localUri || asset.uri);
+        const blob = await response.blob();
+        await uploadBytes(storageRef, blob);
+      } else if (Platform.OS === "web") {
+        await uploadBytes(storageRef, profileImage);
+      } else {
+        const response = await fetch(profileImage.uri);
+        const blob = await response.blob();
+        await uploadBytes(storageRef, blob);
+      }
+
+      // Obtener la URL de la imagen subida
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.formContainer}>
+      <View style={[styles.formContainer, { transform: [{ scale }] }]}>
         <View style={styles.logoContainer}>
           <Image source={logoBlanco} style={styles.logo} resizeMode="contain" />
+        </View>
+        <View style={styles.imageSection}>
+          <Pressable onPress={pickImage} style={styles.imageButton}>
+            <Text style={styles.imageButtonText}>Elegir foto de perfil</Text>
+          </Pressable>
+          <View style={styles.imageContainer}>
+            <Image
+              source={
+                profileImage
+                  ? Platform.OS === "web"
+                    ? { uri: URL.createObjectURL(profileImage) }
+                    : { uri: profileImage.uri }
+                  : defaultProfilePic
+              }
+              style={styles.profileImage}
+            />
+          </View>
         </View>
         <View style={styles.inputsContainer}>
           <View style={styles.inputContainer}>
@@ -273,13 +371,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    minHeight: Platform.OS === "web" ? "100vh" : "100%",
   },
   formContainer: {
-    width: "80%",
+    width: Platform.OS === "web" ? 400 : "90%",
     backgroundColor: "#333",
     borderRadius: 24,
     padding: 24,
     alignItems: "center",
+    transform: [
+      {
+        scale:
+          Platform.OS === "web" ? Math.min(1, window.innerHeight / 850) : 1,
+      },
+    ],
   },
   logoContainer: {
     position: "absolute",
@@ -298,10 +403,10 @@ const styles = StyleSheet.create({
   },
   inputsContainer: {
     width: "100%",
-    marginTop: 64,
+    marginTop: 10,
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 10,
   },
   input: {
     backgroundColor: "#fff",
@@ -370,5 +475,34 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: "#94b1f3",
     marginLeft: 8,
+  },
+  imageContainer: {
+    position: "relative",
+  },
+  profileImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 60,
+    backgroundColor: "#444",
+  },
+  imageButton: {
+    backgroundColor: "#4B5563",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+  },
+  imageButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  imageSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    width: "100%",
+    gap: 20,
+    paddingRight: 20,
+    marginBottom: 10,
   },
 });
