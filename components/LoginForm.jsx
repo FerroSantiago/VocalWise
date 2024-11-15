@@ -53,6 +53,22 @@ export default function LoginForm() {
   const router = useRouter();
 
   useEffect(() => {
+    const loadStoredEmail = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem("rememberedEmail");
+        if (storedEmail) {
+          setEmail(storedEmail);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error("Error loading email:", error);
+      }
+    };
+
+    loadStoredEmail();
+  }, []);
+
+  useEffect(() => {
     checkLockoutStatus();
   }, []);
 
@@ -162,8 +178,14 @@ export default function LoginForm() {
         password
       );
 
+      // Solo guardar el email si rememberMe está activo
+      if (rememberMe) {
+        await AsyncStorage.setItem("rememberedEmail", email);
+      } else {
+        await AsyncStorage.removeItem("rememberedEmail");
+      }
+
       await AsyncStorage.setItem("user", JSON.stringify(userCredential.user));
-      // Limpiar los intentos después de un login exitoso
       await AsyncStorage.removeItem("loginAttempts");
 
       setTimeout(() => {

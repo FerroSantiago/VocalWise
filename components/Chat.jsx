@@ -13,11 +13,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { getAuth } from "firebase/auth";
 import {
-  getFirestore,
   collection,
-  query,
-  orderBy,
+  doc,
+  getFirestore,
   onSnapshot,
+  orderBy,
+  query,
   where,
 } from "firebase/firestore";
 
@@ -36,6 +37,7 @@ export default function Chat() {
   const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [userDoc, setUserDoc] = useState(null);
 
   const isWeb = Platform.OS === "web";
   const router = useRouter();
@@ -213,6 +215,23 @@ export default function Chat() {
     };
   }, [selectedChatId, user]);
 
+  useEffect(() => {
+    if (user && isAuthReady) {
+      const db = getFirestore();
+      const userRef = doc(db, "users", user.uid);
+
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          setUserDoc(doc.data());
+        } else {
+          console.error("No se encontró el documento del usuario");
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user, isAuthReady]);
+
   // Renderizar el componente EmptyChat cuando no hay mensajes
   const EmptyChat = () => (
     <Text style={styles.emptyText}>
@@ -267,9 +286,9 @@ export default function Chat() {
           />
         )}
 
-        {user && selectedChatId && (
+        {user && userDoc && (
           <MessageInput
-            user={user}
+            user={{ ...user, ...userDoc }} // Combinar datos de auth y Firestore
             chatId={selectedChatId}
             onChatCreated={(newChatId) => {
               setSelectedChatId(newChatId);

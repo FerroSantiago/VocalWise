@@ -1,3 +1,6 @@
+import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
+import defaultProfilePic from "../assets/defaultProfilePic.jpg";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,18 +13,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
 import appFirebase from "../credenciales";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  updateProfile,
+} from "firebase/auth";
+import { getFirestore, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useRouter } from "expo-router";
 
 const auth = getAuth(appFirebase);
 const firestore = getFirestore(appFirebase);
 
 export default function RegistrationForm() {
-  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
@@ -41,8 +49,8 @@ export default function RegistrationForm() {
     let valid = true;
     let newErrors = {};
 
-    if (!username) {
-      newErrors.username = "El campo de usuario no puede estar vacío.";
+    if (!displayName) {
+      newErrors.displayName = "El campo de usuario no puede estar vacío.";
       valid = false;
     }
 
@@ -76,9 +84,7 @@ export default function RegistrationForm() {
   };
 
   const register = async () => {
-    // Validar que los campos no estén vacíos
     if (!validateFields()) return;
-
     setIsLoading(true);
 
     try {
@@ -89,11 +95,27 @@ export default function RegistrationForm() {
       );
       const user = userCredential.user;
 
-      await setDoc(doc(firestore, "users", user.uid), {
-        username: username,
-        email: email,
-        userId: user.uid,
+      // Actualizar el perfil del usuario
+      await updateProfile(user, {
+        displayName: displayName,
       });
+
+      // Actualizar Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        email: email,
+        displayName: displayName,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        photoURL: null,
+      });
+
+      await AsyncStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          displayName: displayName, // Asegurar que el displayName se guarda en AsyncStorage
+        })
+      );
 
       console.log("Registro OK");
       setTimeout(() => {
@@ -128,14 +150,17 @@ export default function RegistrationForm() {
         <View style={styles.inputsContainer}>
           <View style={styles.inputContainer}>
             <TextInput
-              style={[styles.input, errors.username ? styles.errorInput : null]}
-              value={username}
-              onChangeText={setUsername}
+              style={[
+                styles.input,
+                errors.displayName ? styles.errorInput : null,
+              ]}
+              value={displayName}
+              onChangeText={setDisplayName}
               placeholder="Usuario"
               placeholderTextColor="#9CA3AF"
             />
-            {errors.username && (
-              <Text style={styles.errorText}>{errors.username}</Text>
+            {errors.displayName && (
+              <Text style={styles.errorText}>{errors.displayName}</Text>
             )}
           </View>
           <View style={styles.inputContainer}>

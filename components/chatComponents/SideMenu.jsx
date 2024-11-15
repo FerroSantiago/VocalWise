@@ -392,14 +392,14 @@ const SideMenu = ({
           </Pressable>
           {user ? (
             <Text
-              style={styles.userEmail}
+              style={styles.userDisplayName}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
-              {user.email}
+              {user.displayName}
             </Text>
           ) : (
-            <Text style={styles.userEmail}>Cargando usuario...</Text>
+            <Text style={styles.userDisplayName}>Cargando usuario...</Text>
           )}
         </View>
       </Animated.View>
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     width: "50%",
     marginBottom: 5,
   },
-  userEmail: {
+  userDisplayName: {
     color: "white",
     textAlign: "center",
     maxWidth: "100%",
