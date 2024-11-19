@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Feather } from "@expo-vector-icons";
+import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
 
 import appFirebase from "../credenciales";
