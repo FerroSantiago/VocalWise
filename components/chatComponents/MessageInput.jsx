@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Feather } from "@expo-vector-icons";
+import { Feather } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import {
   addDoc,
