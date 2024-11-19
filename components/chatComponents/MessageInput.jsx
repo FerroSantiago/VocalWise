@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import Icon from "react-native-vector-icons/Feather";
+import { Feather } from "@expo-vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import {
   addDoc,
@@ -248,7 +248,7 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
         <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
           {fileObject && (
             <View style={styles.filePreview}>
-              <Icon name="file" size={20} color="#DDD" />
+              <Feather name="file" size={20} color="#DDD" />
               <Text style={styles.fileName}>{fileName}</Text>
               <Pressable
                 onPress={removeFile}
@@ -257,7 +257,7 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >
-                <Icon name="x" size={10} color="#FFF" />
+                <Feather name="x" size={10} color="#FFF" />
               </Pressable>
             </View>
           )}
@@ -289,7 +289,7 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >
-                <Icon name="paperclip" size={20} color="#999" />
+                <Feather name="paperclip" size={20} color="#999" />
               </Pressable>
               <Pressable
                 onPress={sendMessage}
@@ -299,7 +299,7 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
                   { opacity: pressed ? 0.5 : 1 },
                 ]}
               >
-                <Icon name="send" size={20} color="#999" />
+                <Feather name="send" size={20} color="#999" />
               </Pressable>
             </View>
           </View>

@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import Icon from "react-native-vector-icons/Feather";
+import { Feather } from "@expo-vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import {
@@ -144,24 +144,24 @@ const ChatItem = ({
               <Pressable
                 onPress={handleOptionsPress}
                 style={({ pressed }) => [
-                  styles.iconButton,
+                  styles.IconButton,
                   pressed && styles.pressedIcon,
                 ]}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Icon name="more-vertical" size={20} color="#CCC" />
+                <Feather name="more-vertical" size={20} color="#CCC" />
               </Pressable>
             )}
             {showDeleteIcon && (
               <Pressable
                 onPress={handleDeletePress}
                 style={({ pressed }) => [
-                  styles.iconButton,
+                  styles.IconButton,
                   pressed && styles.pressedIcon,
                 ]}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Icon name="trash-2" size={20} color="#ff4444" />
+                <Feather name="trash-2" size={20} color="#ff4444" />
               </Pressable>
             )}
           </View>
@@ -354,7 +354,7 @@ const SideMenu = ({
               pressed && styles.pressedButton,
             ]}
           >
-            <Icon name={isMenuOpen ? "x" : "menu"} size={30} color="#CCC" />
+            <Feather name={isMenuOpen ? "x" : "menu"} size={30} color="#CCC" />
           </Pressable>
         )}
         <View style={styles.chatHistoryContent}>
@@ -368,7 +368,7 @@ const SideMenu = ({
             ]}
             disabled={hasEmptyChat}
           >
-            <Icon
+            <Feather
               name="plus"
               size={20}
               color={hasEmptyChat ? "#666" : "#CCC"}
@@ -418,7 +418,7 @@ const SideMenu = ({
               pressed && styles.pressedButton,
             ]}
           >
-            <Icon name="log-out" size={20} color="#CCC" />
+            <Feather name="log-out" size={20} color="#CCC" />
           </Pressable>
         </View>
       </Animated.View>

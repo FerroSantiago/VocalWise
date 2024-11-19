@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, Animated, StyleSheet } from "react-native";
-import Icon from "react-native-vector-icons/Feather";
+import { Feather } from "@expo-vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TypingAnimation = ({ text, onComplete }) => {
@@ -171,7 +171,7 @@ const BubbleMessage = React.memo(
       >
         {fileName && (
           <View style={styles.fileContainer}>
-            <Icon name="file" size={15} color="#999" />
+            <Feather name="file" size={15} color="#999" />
             <Text style={styles.fileName}>{fileName}</Text>
           </View>
         )}
