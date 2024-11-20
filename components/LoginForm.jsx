@@ -271,6 +271,12 @@ export default function LoginForm() {
     }
   };
 
+  console.log("Rendering icon:", {
+    showPasswordIcon: showPassword ? "eye" : "eye-off",
+    mailIcon: "mail",
+    facebookIcon: "facebook",
+  });
+
   return (
     <SafeAreaView style={styles.container} role="form">
       <View style={styles.formContainer}>
@@ -406,6 +412,7 @@ export default function LoginForm() {
             size={24}
             color="#fff"
             style={{ fontFamily: "feather" }}
+            onError={(e) => console.error("Icon error:", e)}
           />
           <Text style={styles.socialButtonText}>Iniciar sesión con Meta</Text>
         </Pressable>
