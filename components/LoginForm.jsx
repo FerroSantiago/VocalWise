@@ -321,6 +321,7 @@ export default function LoginForm() {
               name={showPassword ? "eye" : "eye-off"}
               size={24}
               color="#999"
+              style={{ fontFamily: "feather" }}
             />
           </Pressable>
         </View>
@@ -387,7 +388,12 @@ export default function LoginForm() {
           role="button"
           aria-label="Iniciar sesión con Google"
         >
-          <Feather name="mail" size={24} color="#fff" />
+          <Feather
+            name="mail"
+            size={24}
+            color="#fff"
+            style={{ fontFamily: "feather" }}
+          />
           <Text style={styles.socialButtonText}>Iniciar sesión con Google</Text>
         </Pressable>
         <Pressable
@@ -395,7 +401,12 @@ export default function LoginForm() {
           role="button"
           aria-label="Iniciar sesión con Meta"
         >
-          <Feather name="facebook" size={24} color="#fff" />
+          <Feather
+            name="facebook"
+            size={24}
+            color="#fff"
+            style={{ fontFamily: "feather" }}
+          />
           <Text style={styles.socialButtonText}>Iniciar sesión con Meta</Text>
         </Pressable>
       </View>

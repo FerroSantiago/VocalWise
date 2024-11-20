@@ -23,7 +23,13 @@
       "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "fonts": [
+        {
+          "asset": "@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"
+        }
+      ]
     },
     "plugins": [
       "expo-router"
