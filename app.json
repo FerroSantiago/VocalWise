@@ -25,9 +25,11 @@
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
+      "includeFontPadding": false,
       "fonts": [
         {
-          "asset": "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf"
+          "asset": "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ttf",
+          "format": "truetype"
         }
       ]
     },
