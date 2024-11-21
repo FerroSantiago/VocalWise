@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { auth, db } from "..credenciales/";
+import { auth, db } from "../credenciales";
 import {
   collection,
   doc,
