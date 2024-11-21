@@ -12,27 +12,23 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
-import appFirebase from "../credenciales";
+import { auth, db } from "../credenciales";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
 import {
-  getFirestore,
   doc,
   getDoc,
   setDoc,
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useRouter } from "expo-router";
-
-const auth = getAuth(appFirebase);
 const googleProvider = new GoogleAuthProvider();
 
 const MAX_ATTEMPTS = 3;
@@ -220,7 +216,6 @@ export default function LoginForm() {
       await AsyncStorage.setItem("user", JSON.stringify(userToStore));
 
       // Guardar usuario en Firestore
-      const db = getFirestore();
       const userRef = doc(db, "users", user.uid);
 
       // Verificar si el usuario ya existe en Firestore
@@ -270,12 +265,6 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   };
-
-  console.log("Rendering icon:", {
-    showPasswordIcon: showPassword ? "eye" : "eye-off",
-    mailIcon: "mail",
-    facebookIcon: "facebook",
-  });
 
   return (
     <SafeAreaView style={styles.container} role="form">

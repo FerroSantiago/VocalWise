@@ -16,19 +16,12 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
-import appFirebase from "../credenciales";
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  updateProfile,
-} from "firebase/auth";
-import { getFirestore, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, db, storage } from "../credenciales";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "expo-router";
 import { Asset } from "expo-asset";
-
-const auth = getAuth(appFirebase);
-const firestore = getFirestore(appFirebase);
 
 export default function RegistrationForm() {
   const [displayName, setDisplayName] = useState("");
@@ -42,7 +35,6 @@ export default function RegistrationForm() {
   const [profileImage, setProfileImage] = useState(null);
   const [scale, setScale] = useState(1);
 
-  const storage = getStorage();
   const router = useRouter();
 
   const validateEmail = (email) => {
@@ -118,7 +110,7 @@ export default function RegistrationForm() {
       const photoURL = await uploadImage(user.uid);
 
       // 3. Actualizar Firestore primero
-      await setDoc(doc(firestore, "users", user.uid), {
+      await setDoc(doc(db, "users", user.uid), {
         email: email,
         displayName: displayName,
         photoURL: photoURL,

@@ -11,17 +11,16 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import { db, storage } from "../../credenciales";
 import {
   addDoc,
   collection,
   doc,
-  getDoc,
-  getFirestore,
   runTransaction,
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const MessageInput = ({ user, chatId, onChatCreated }) => {
   const [inputText, setInputText] = useState("");
@@ -75,8 +74,6 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
 
     try {
       setIsSending(true);
-      const db = getFirestore();
-      const storage = getStorage();
       let fileUrl = null;
       let finalChatId = chatId;
 
@@ -169,7 +166,6 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
   }, [inputText, fileObject, user, chatId, fileName, onChatCreated]);
 
   const sendAutoResponse = async (chatId) => {
-    const db = getFirestore();
     const autoResponseData = {
       text: "Actualmente me encuentro en etapa de desarrollo y no cuento con la capacidad de proveerte una respuesta en este momento. ¡Espero que podamos trabajar juntos en un futuro!",
       createdAt: serverTimestamp(),

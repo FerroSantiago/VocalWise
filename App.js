@@ -1,8 +1,8 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
 import Layout from "./app/_layout";
+import "./credenciales";
 
 export default function App() {
   return (

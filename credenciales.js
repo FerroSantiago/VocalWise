@@ -1,5 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -16,6 +19,23 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const appFirebase = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  // Si ya existe una instancia, la obtenemos
+  if (error.code === "already-exists") {
+    app = getApp();
+  } else {
+    console.error("Error initializing Firebase:", error);
+    throw error;
+  }
+}
 
-export default appFirebase;
+// Obtener instancias de Auth, Firestore, Storage
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+export { auth, db, storage };
+export default app;

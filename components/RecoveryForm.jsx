@@ -12,11 +12,9 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
-import appFirebase from "../credenciales";
-import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "..credenciales/";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "expo-router";
-
-const auth = getAuth(appFirebase);
 
 export default function RecoveryForm() {
   const [email, setEmail] = useState("");

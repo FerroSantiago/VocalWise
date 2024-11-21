@@ -11,11 +11,10 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { getAuth } from "firebase/auth";
+import { auth, db } from "..credenciales/";
 import {
   collection,
   doc,
-  getFirestore,
   onSnapshot,
   orderBy,
   query,
@@ -26,7 +25,7 @@ import {
 import Logo from "./Logo";
 import MessageInput from "./chatComponents/MessageInput";
 import SideMenu from "./chatComponents/SideMenu";
-import BubbleMessage from "./chatComponents/BubbleMessage"; // Importamos el nuevo componente separado
+import BubbleMessage from "./chatComponents/BubbleMessage";
 
 export default function Chat() {
   const { height, width } = useWindowDimensions();
@@ -70,7 +69,6 @@ export default function Chat() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const auth = getAuth();
         const storedUser = await AsyncStorage.getItem("user");
 
         if (storedUser) {
@@ -106,7 +104,6 @@ export default function Chat() {
   useEffect(() => {
     if (user && isAuthReady) {
       setIsLoading(true);
-      const db = getFirestore();
       const chatsQuery = query(
         collection(db, "chats"),
         where("userId", "==", user.uid),
@@ -140,7 +137,6 @@ export default function Chat() {
         (error) => {
           console.error("Error fetching chats:", error);
           if (error.code === "permission-denied") {
-            const auth = getAuth();
             if (auth.currentUser) {
               auth.currentUser
                 .getIdToken(true)
@@ -163,7 +159,6 @@ export default function Chat() {
     const loadMessages = async () => {
       if (selectedChatId && user) {
         setIsLoading(true);
-        const db = getFirestore();
 
         try {
           const messagesQuery = query(
@@ -215,9 +210,9 @@ export default function Chat() {
     };
   }, [selectedChatId, user]);
 
+  // Efecto para cargar el documento del usuario
   useEffect(() => {
     if (user && isAuthReady) {
-      const db = getFirestore();
       const userRef = doc(db, "users", user.uid);
 
       const unsubscribe = onSnapshot(userRef, (doc) => {
