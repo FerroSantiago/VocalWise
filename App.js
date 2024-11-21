@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import Layout from "./app/_layout";
+import { ExpoRoot } from "expo-router";
 import "./credenciales";
 
 export default function App() {
@@ -9,7 +9,7 @@ export default function App() {
     <SafeAreaProvider>
       <View style={styles.container}>
         <StatusBar style="auto" />
-        <Layout />
+        <ExpoRoot context={require.context("./app")} />
       </View>
     </SafeAreaProvider>
   );
