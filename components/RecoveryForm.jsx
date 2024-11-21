@@ -12,7 +12,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import logoBlanco from "../assets/logoBlanco.webp";
-import { auth } from "..credenciales/";
+import { auth } from "../credenciales";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useRouter } from "expo-router";
 
