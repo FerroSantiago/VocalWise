@@ -33,12 +33,13 @@ export default function Chat() {
   const [chats, setChats] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isMenuOpen, setIsMenuOpen] = useState(Platform.OS === "web");
+  const [isMenuOpen, setIsMenuOpen] = useState(width > 768);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [userDoc, setUserDoc] = useState(null);
 
   const isWeb = Platform.OS === "web";
+  const isMobile = width <= 768;
   const router = useRouter();
 
   const handleSelectChat = useCallback(
@@ -64,6 +65,13 @@ export default function Chat() {
   const handleSetMessages = useCallback((newMessages) => {
     setMessages(newMessages);
   }, []);
+
+  // Efecto para manejar cambios en el tamaño de la ventana
+  useEffect(() => {
+    if (isWeb) {
+      setIsMenuOpen(width > 768);
+    }
+  }, [width, isWeb]);
 
   // Efecto para verificar la autenticación del usuario
   useEffect(() => {
@@ -246,10 +254,14 @@ export default function Chat() {
         setMessages={handleSetMessages}
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={handleSetIsMenuOpen}
+        isMobile={isMobile}
       />
 
       <View
-        style={[{ marginLeft: isWeb ? width * 0.15 : 0 }, styles.chatContent]}
+        style={[
+          { marginLeft: isWeb && !isMobile ? width * 0.15 : 0 },
+          styles.chatContent,
+        ]}
       >
         <View style={styles.logo}>
           <Logo />

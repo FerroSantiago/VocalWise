@@ -181,6 +181,7 @@ const SideMenu = ({
   setMessages,
   isMenuOpen,
   setIsMenuOpen,
+  isMobile,
 }) => {
   const isWeb = Platform.OS === "web";
   const slideAnim = useRef(new Animated.Value(-width * 0.8)).current;
@@ -190,7 +191,7 @@ const SideMenu = ({
   const [hasEmptyChat, setHasEmptyChat] = useState(false);
 
   useEffect(() => {
-    if (!isWeb) {
+    if (isMobile) {
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: isMenuOpen ? 0 : -width * 0.85,
@@ -204,7 +205,7 @@ const SideMenu = ({
         }),
       ]).start();
     }
-  }, [isMenuOpen, width, isWeb, slideAnim, fadeAnim]);
+  }, [isMenuOpen, width, isMobile, slideAnim, fadeAnim]);
 
   const logout = async () => {
     try {
@@ -328,7 +329,7 @@ const SideMenu = ({
           styles.overlay,
           {
             opacity: fadeAnim,
-            display: isWeb ? "none" : "flex",
+            display: !isMobile ? "none" : "flex",
             pointerEvents: isMenuOpen ? "auto" : "none",
           },
         ]}
@@ -338,14 +339,14 @@ const SideMenu = ({
         style={[
           styles.sidebarMenu,
           {
-            width: isWeb ? width * 0.15 : width * 0.8,
-            transform: [{ translateX: isWeb ? 0 : slideAnim }],
+            width: isWeb && !isMobile ? width * 0.15 : width * 0.8,
+            transform: [{ translateX: isMobile ? slideAnim : 0 }],
             height: height,
             left: 0,
           },
         ]}
       >
-        {!isWeb && (
+        {isMobile && (
           <Pressable
             onPress={toggleMenu}
             style={({ pressed }) => [
