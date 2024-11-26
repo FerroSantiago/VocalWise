@@ -69,9 +69,9 @@ export default function Chat() {
   // Efecto para manejar cambios en el tamaño de la ventana
   useEffect(() => {
     if (isWeb) {
-      setIsMenuOpen(width > 768);
+      setIsMenuOpen(!isMobile);
     }
-  }, [width, isWeb]);
+  }, [width, isWeb, isMobile]);
 
   // Efecto para verificar la autenticación del usuario
   useEffect(() => {
@@ -254,6 +254,7 @@ export default function Chat() {
         setMessages={handleSetMessages}
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={handleSetIsMenuOpen}
+        isWeb={isWeb}
         isMobile={isMobile}
       />
 
@@ -301,6 +302,8 @@ export default function Chat() {
               setSelectedChatId(newChatId);
               handleSelectChat(newChatId);
             }}
+            isWeb={isWeb}
+            isMobile={isMobile}
           />
         )}
       </View>

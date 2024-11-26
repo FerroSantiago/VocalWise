@@ -23,7 +23,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const MessageInput = ({ user, chatId, onChatCreated }) => {
+const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
   const [inputText, setInputText] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileObject, setFileObject] = useState(null);
@@ -231,8 +231,8 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS !== "web" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS !== "web" ? 90 : 0}
+      behavior={!isWeb ? "padding" : "height"}
+      keyboardVerticalOffset={!isWeb ? 90 : 0}
       style={styles.keyboardAvoidingView}
     >
       {isSending && (
@@ -242,7 +242,15 @@ const MessageInput = ({ user, chatId, onChatCreated }) => {
         </View>
       )}
       <View style={styles.container}>
-        <View style={[styles.inputContainer, { minHeight: inputHeight + 20 }]}>
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              minHeight: inputHeight + 20,
+              width: isWeb && !isMobile ? "70%" : "95%",
+            },
+          ]}
+        >
           {fileObject && (
             <View style={styles.filePreview}>
               <Feather name="file" size={20} color="#DDD" />
@@ -319,7 +327,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     padding: 5,
     backgroundColor: "#444",
-    width: Platform.OS === "web" ? "70%" : "95%",
     borderRadius: 28,
     marginBottom: 10,
   },
