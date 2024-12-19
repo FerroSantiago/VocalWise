@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { db, storage } from "../../credenciales";
+import { db } from "../../credenciales";
 import {
   addDoc,
   collection,
@@ -23,47 +23,46 @@ import {
 } from "firebase/firestore";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Buffer } from "buffer";
-import config from "../../config"
 
-  // Inicializar el polyfill de Buffer
-  if (typeof global.Buffer === "undefined") {
-    global.Buffer = Buffer;
+// Inicializar el polyfill de Buffer
+if (typeof global.Buffer === "undefined") {
+  global.Buffer = Buffer;
+}
+
+// Función para subir archivo a Azure Blob Storage
+const uploadFileToAzure = async (fileObject) => {
+  try {
+    console.log("Subiendo archivo a Azure Blob Storage...");
+
+    // URL del contenedor con el SAS Token
+    const containerURL = `https://${process.env.EXPO_PUBLIC_ACCOUNT_NAME}.blob.core.windows.net/${process.env.EXPO_PUBLIC_AZURE_BLOB_CONTAINER_NAME}?${process.env.EXPO_PUBLIC_SAS_TOKEN}`;
+    const blobServiceClient = new BlobServiceClient(containerURL);
+
+    // Crear cliente del contenedor
+    const containerClient = blobServiceClient.getContainerClient();
+    const blobName = `uploads/${Date.now()}_${fileObject.name}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    // Leer archivo como Blob nativo
+    const response = await fetch(fileObject.uri);
+    const blob = await response.blob();
+
+    // Convertir Blob a ArrayBuffer
+    const arrayBuffer = await blob.arrayBuffer();
+
+    // Subir archivo
+    await blockBlobClient.uploadData(new Uint8Array(arrayBuffer));
+    const fullFileUrl = blockBlobClient.url;
+
+    // Eliminar el SAS Token de la URL
+    const fileUrlWithoutToken = fullFileUrl.split("?")[0];
+
+    console.log("Archivo subido con éxito a Azure:", fullFileUrl);
+    return fileUrlWithoutToken;
+  } catch (error) {
+    console.error("Error al subir a Azure Blob Storage:", error.message);
+    throw error;
   }
-
-  // Función para subir archivo a Azure Blob Storage
-  const uploadFileToAzure = async (fileObject) => {
-    try {
-      console.log("Subiendo archivo a Azure Blob Storage...");
-
-      // URL del contenedor con el SAS Token
-      const containerURL = `https://${config.ACCOUNT_NAME}.blob.core.windows.net/${config.AZURE_BLOB_CONTAINER_NAME}?${config.SAS_TOKEN}`;
-      const blobServiceClient = new BlobServiceClient(containerURL);
-  
-      // Crear cliente del contenedor
-      const containerClient = blobServiceClient.getContainerClient();
-      const blobName = `uploads/${Date.now()}_${fileObject.name}`;
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  
-      // Leer archivo como Blob nativo
-      const response = await fetch(fileObject.uri);
-      const blob = await response.blob();
-  
-      // Convertir Blob a ArrayBuffer
-      const arrayBuffer = await blob.arrayBuffer();
-  
-      // Subir archivo
-      await blockBlobClient.uploadData(new Uint8Array(arrayBuffer));
-      const fullFileUrl = blockBlobClient.url;
-
-      // Eliminar el SAS Token de la URL
-      const fileUrlWithoutToken = fullFileUrl.split("?")[0];
-  
-      console.log("Archivo subido con éxito a Azure:", fullFileUrl);
-      return fileUrlWithoutToken;
-    } catch (error) {
-      console.error("Error al subir a Azure Blob Storage:", error.message);
-      throw error;
-    }
 };
 
 const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
@@ -201,29 +200,31 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
         setIsProcessingAPI(true);
         try {
           // Verificar qué se está enviando a la API
-          console.log("Enviando a la API:", JSON.stringify({
-            url: azureFileUrl,
-            VocalWise: inputText.trim(),
-            nombre: "Video de análisis",
-            descripcion: "Video subido desde VocalWise",
-          }));          
-          const response = await fetch(
-            config.API_ENDPOINT,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                url: azureFileUrl,
-                VocalWise: inputText.trim(),
-                nombre: "Video de análisis",
-                descripcion: "Video subido desde VocalWise",
-              }),
-            }
+          console.log(
+            "Enviando a la API:",
+            JSON.stringify({
+              url: azureFileUrl,
+              VocalWise: inputText.trim(),
+              nombre: "Video de análisis",
+              descripcion: "Video subido desde VocalWise",
+            })
           );
-      
+          const response = await fetch(process.env.EXPO_PUBLIC_API_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: azureFileUrl,
+              VocalWise: inputText.trim(),
+              nombre: "Video de análisis",
+              descripcion: "Video subido desde VocalWise",
+            }),
+          });
+
           if (response.ok) {
             const apiResponse = await response.json();
-            const textResult = apiResponse.videoAnalisis?.textResult || "No se encontró el análisis.";
+            const textResult =
+              apiResponse.videoAnalisis?.textResult ||
+              "No se encontró el análisis.";
             console.log("Respuesta completa de la API:", apiResponse);
             console.log("Campo 'textResult':", textResult);
 
@@ -237,7 +238,7 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
               fileName: null,
               author: "vocalwise",
             };
-      
+
             await addDoc(
               collection(db, `chats/${finalChatId}/messages`),
               autoResponseData
@@ -254,7 +255,6 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
           setIsProcessingAPI(false);
         }
       }
-
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
       // Manejar el error específicamente
