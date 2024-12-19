@@ -307,6 +307,9 @@ const SideMenu = ({
     setIsMenuOpen(!isMenuOpen);
   };
 
+
+  const [imageError, setImageError] = useState(false);
+  
   const handleImageError = () => {
     console.log("Error cargando imagen:", user?.photoURL);
     setImageError(true);

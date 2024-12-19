@@ -21,7 +21,50 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { BlobServiceClient } from "@azure/storage-blob";
+import { Buffer } from "buffer";
+import config from "../../config"
+
+  // Inicializar el polyfill de Buffer
+  if (typeof global.Buffer === "undefined") {
+    global.Buffer = Buffer;
+  }
+
+  // Función para subir archivo a Azure Blob Storage
+  const uploadFileToAzure = async (fileObject) => {
+    try {
+      console.log("Subiendo archivo a Azure Blob Storage...");
+
+      // URL del contenedor con el SAS Token
+      const containerURL = `https://${config.ACCOUNT_NAME}.blob.core.windows.net/${config.AZURE_BLOB_CONTAINER_NAME}?${config.SAS_TOKEN}`;
+      const blobServiceClient = new BlobServiceClient(containerURL);
+  
+      // Crear cliente del contenedor
+      const containerClient = blobServiceClient.getContainerClient();
+      const blobName = `uploads/${Date.now()}_${fileObject.name}`;
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  
+      // Leer archivo como Blob nativo
+      const response = await fetch(fileObject.uri);
+      const blob = await response.blob();
+  
+      // Convertir Blob a ArrayBuffer
+      const arrayBuffer = await blob.arrayBuffer();
+  
+      // Subir archivo
+      await blockBlobClient.uploadData(new Uint8Array(arrayBuffer));
+      const fullFileUrl = blockBlobClient.url;
+
+      // Eliminar el SAS Token de la URL
+      const fileUrlWithoutToken = fullFileUrl.split("?")[0];
+  
+      console.log("Archivo subido con éxito a Azure:", fullFileUrl);
+      return fileUrlWithoutToken;
+    } catch (error) {
+      console.error("Error al subir a Azure Blob Storage:", error.message);
+      throw error;
+    }
+};
 
 const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
   const [inputText, setInputText] = useState("");
@@ -29,6 +72,7 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
   const [fileObject, setFileObject] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [inputHeight, setInputHeight] = useState(24);
+  const [isProcessingAPI, setIsProcessingAPI] = useState(false);
 
   const uploadFile = async () => {
     try {
@@ -39,6 +83,8 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "application/vnd.ms-powerpoint",
           "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "video/mp4",
+          "video/mov",
         ],
         copyToCacheDirectory: false,
       });
@@ -75,14 +121,14 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
 
     try {
       setIsSending(true);
-      let fileUrl = null;
+      let azureFileUrl = null;
       let finalChatId = chatId;
 
       // Si hay un archivo, procesarlo primero
       if (fileObject) {
-        const fileRef = ref(storage, `chat_files/${Date.now()}_${fileName}`);
-        await uploadBytes(fileRef, fileObject);
-        fileUrl = await getDownloadURL(fileRef);
+        // Subir archivo a Azure
+        azureFileUrl = await uploadFileToAzure(fileObject);
+        console.log("Azure File URL:", azureFileUrl);
       }
 
       // Si no hay chatId, crear un nuevo chat
@@ -110,7 +156,7 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
         createdAt: serverTimestamp(),
         userId: user.uid,
         userName: user.displayName || user.email,
-        fileUrl: fileUrl,
+        fileUrl: azureFileUrl,
         fileName: fileName,
         author: "user",
       };
@@ -144,16 +190,71 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
         transaction.set(newMessageRef, messageData);
       });
 
-      // Limpiar el estado local
+      // Limpiar el estado local antes de continuar
       setInputText("");
       setFileName("");
       setFileObject(null);
       setInputHeight(24);
 
-      // Enviar respuesta automática después de un delay
-      setTimeout(() => {
-        sendAutoResponse(finalChatId);
-      }, 1000);
+      // Llamar a la API si hay un video
+      if (azureFileUrl) {
+        setIsProcessingAPI(true);
+        try {
+          // Verificar qué se está enviando a la API
+          console.log("Enviando a la API:", JSON.stringify({
+            url: azureFileUrl,
+            VocalWise: inputText.trim(),
+            nombre: "Video de análisis",
+            descripcion: "Video subido desde VocalWise",
+          }));          
+          const response = await fetch(
+            config.API_ENDPOINT,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: azureFileUrl,
+                VocalWise: inputText.trim(),
+                nombre: "Video de análisis",
+                descripcion: "Video subido desde VocalWise",
+              }),
+            }
+          );
+      
+          if (response.ok) {
+            const apiResponse = await response.json();
+            const textResult = apiResponse.videoAnalisis?.textResult || "No se encontró el análisis.";
+            console.log("Respuesta completa de la API:", apiResponse);
+            console.log("Campo 'textResult':", textResult);
+
+            // Guardar la respuesta en Firebase
+            const autoResponseData = {
+              text: textResult,
+              createdAt: serverTimestamp(),
+              userId: "vocalwise",
+              userName: "VocalWise",
+              fileUrl: null,
+              fileName: null,
+              author: "vocalwise",
+            };
+      
+            await addDoc(
+              collection(db, `chats/${finalChatId}/messages`),
+              autoResponseData
+            );
+          } else {
+            const errorText = await response.text();
+            console.error("Error al procesar el video:", errorText);
+            throw new Error(`Error en la API: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("Error al procesar el video:", error.message);
+          alert("Hubo un problema al procesar el video. Inténtalo de nuevo.");
+        } finally {
+          setIsProcessingAPI(false);
+        }
+      }
+
     } catch (error) {
       console.error("Error al enviar el mensaje:", error);
       // Manejar el error específicamente
@@ -163,32 +264,9 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
       }
     } finally {
       setIsSending(false);
+      setIsProcessingAPI(false);
     }
   }, [inputText, fileObject, user, chatId, fileName, onChatCreated]);
-
-  const sendAutoResponse = async (chatId) => {
-    const autoResponseData = {
-      text: "Actualmente me encuentro en etapa de desarrollo y no cuento con la capacidad de proveerte una respuesta en este momento. ¡Espero que podamos trabajar juntos en un futuro!",
-      createdAt: serverTimestamp(),
-      userId: "vocalwise",
-      userName: "VocalWise",
-      fileUrl: null,
-      fileName: null,
-      author: "vocalwise",
-    };
-
-    await addDoc(collection(db, `chats/${chatId}/messages`), autoResponseData);
-
-    // Actualizar el último mensaje del chat
-    await setDoc(
-      doc(db, "chats", chatId),
-      {
-        lastMessage: autoResponseData.text,
-        lastMessageTime: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  };
 
   const handleKeyPress = (e) => {
     if (Platform.OS === "web" && e.key === "Enter") {
@@ -235,10 +313,14 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
       keyboardVerticalOffset={!isWeb ? 90 : 0}
       style={styles.keyboardAvoidingView}
     >
-      {isSending && (
+      {(isSending || isProcessingAPI) && (
         <View style={styles.sendingIndicator}>
           <ActivityIndicator size="small" color="#999" />
-          <Text style={styles.sendingText}>Enviando mensaje...</Text>
+          <Text style={styles.sendingText}>
+            {isProcessingAPI
+              ? "Procesando video con IA..."
+              : "Enviando mensaje..."}
+          </Text>
         </View>
       )}
       <View style={styles.container}>
