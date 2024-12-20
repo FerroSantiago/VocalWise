@@ -88,11 +88,6 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
         copyToCacheDirectory: false,
       });
 
-      console.log("Variables de entorno:", {
-        accountName: process.env.EXPO_PUBLIC_ACCOUNT_NAME,
-        containerName: process.env.EXPO_PUBLIC_AZURE_BLOB_CONTAINER_NAME,
-        sasToken: "presente: " + !!process.env.EXPO_PUBLIC_SAS_TOKEN,
-      });
       console.log("Resultado de DocumentPicker:", result);
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
