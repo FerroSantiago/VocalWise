@@ -15,19 +15,20 @@ const WalkthroughSection = () => {
   const scrollViewRef = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Calculamos el ancho exacto que necesitamos para el contenedor del slide
   const containerWidth = width;
   const slideWidth =
-    Platform.OS === "web" ? Math.min(width * 0.8, 1200) : width;
+    Platform.OS === "web" ? Math.min(width * 0.8, 1200) : width * 0.95; // Dar un poco de margen en móvil
+
+  // Calculamos el ancho del video basado en el slideWidth
+  const videoWidth = slideWidth * 0.9; // 90% del ancho del slide
+  const videoHeight = videoWidth / 2.33; // Mantener aspect ratio
 
   const slides = [
     {
       id: 1,
       title: "Versión Web",
       description: "Descubre cómo utilizar VocalWise en tu navegador",
-      videoSource: {
-        uri: "URL_DE_TU_VIDEO_WEB",
-      },
+      videoSource: require("../../assets/WalkthroughWeb.mp4"),
     },
     {
       id: 2,
@@ -50,16 +51,26 @@ const WalkthroughSection = () => {
       <View style={[styles.slide, { width: slideWidth }]}>
         <Text style={styles.slideTitle}>{item.title}</Text>
         <Text style={styles.slideDescription}>{item.description}</Text>
-        <Video
-          source={item.videoSource}
-          rate={1.0}
-          volume={1.0}
-          isMuted={false}
-          resizeMode="contain"
-          shouldPlay={false}
-          useNativeControls
-          style={styles.video}
-        />
+        <View
+          style={[
+            styles.videoContainer,
+            { width: videoWidth, height: videoHeight },
+          ]}
+        >
+          <Video
+            source={item.videoSource}
+            rate={1.0}
+            volume={1.0}
+            isMuted={false}
+            resizeMode="contain"
+            shouldPlay={false}
+            useNativeControls
+            style={[
+              styles.video,
+              { position: "relative" }, // Forzar posición relativa
+            ]}
+          />
+        </View>
       </View>
     </View>
   );
@@ -136,6 +147,8 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     alignItems: "center",
+    width: "100%",
+    minHeight: 500,
   },
   sectionTitle: {
     fontSize: 32,
@@ -155,10 +168,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
+  videoContainer: {
+    backgroundColor: "rgba(0,0,0,0.2)",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginVertical: 10,
+    position: "relative",
+  },
   video: {
     width: "100%",
-    height: 300,
-    borderRadius: 10,
+    height: "100%",
+    position: "relative",
   },
   paginationContainer: {
     flexDirection: "row",

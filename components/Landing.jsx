@@ -77,7 +77,7 @@ export default function Landing() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingTop: NAVBAR_HEIGHT }}>
+      <ScrollView style={styles.scrollContainer} pointerEvents="box-none">
         <WelcomeSection navbarHeight={NAVBAR_HEIGHT} />
         <WalkthroughSection />
         <PlansSection />
@@ -92,17 +92,16 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   navContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    width: "100%",
     backgroundColor: "rgba(68, 68, 68, 0.9)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
     paddingHorizontal: 5,
     backdropFilter: "blur(4px)",
-    zIndex: 10,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   navSectionButton: {
     padding: 10,
