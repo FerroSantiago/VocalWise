@@ -250,12 +250,33 @@ const MessageInput = ({ user, chatId, onChatCreated, isWeb, isMobile }) => {
             );
           } else {
             const errorText = await response.text();
-            console.error("Error al procesar el video:", errorText);
-            throw new Error(`Error en la API: ${response.status}`);
+            console.error("Error Response:", {
+              status: response.status,
+              statusText: response.statusText,
+              body: errorText,
+              headers: Object.fromEntries(response.headers.entries()),
+            });
+            throw new Error(
+              `Error en la API: ${response.status} - ${errorText}`
+            );
           }
         } catch (error) {
-          console.error("Error al procesar el video:", error.message);
-          alert("Hubo un problema al procesar el video. Inténtalo de nuevo.");
+          console.error("=== Error detallado ===");
+          console.error("Tipo de error:", error.constructor.name);
+          console.error("Mensaje:", error.message);
+          console.error("Stack:", error.stack);
+
+          if (
+            error instanceof TypeError &&
+            error.message.includes("Failed to fetch")
+          ) {
+            console.error("Error de CORS o red detectado");
+            // Intentar obtener más información sobre el error de red
+            console.error("Navigator online:", navigator.onLine);
+            console.error("User Agent:", navigator.userAgent);
+          }
+
+          throw error;
         } finally {
           setIsProcessingAPI(false);
         }
